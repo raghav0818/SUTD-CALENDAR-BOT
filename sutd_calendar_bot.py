@@ -56,9 +56,9 @@ TYPE_MAPPING = {
 # --- 2. EXECUTABLE PATH HELPER ---
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
+    # PyInstaller creates a temporary folder and stores path in _MEIPASS
+    base_path = getattr(sys, '_MEIPASS', None)
+    if not base_path:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
@@ -569,11 +569,13 @@ class CalendarApp(ctk.CTk):
             chk_frame.pack(fill="x", padx=10, pady=5)
 
             for type_code in course['type'].keys():
-                friendly_name = TYPE_MAPPING.get(type_code, type_code)
+                # Ensure friendly_name is always a string to satisfy CTkCheckBox
+                friendly_name = str(TYPE_MAPPING.get(type_code) or type_code)
                 var = ctk.BooleanVar(value=True)
+                # Register variable before widget creation so lookups are safe
+                self.selection_vars[(i, type_code)] = var
                 chk = ctk.CTkCheckBox(chk_frame, text=friendly_name, variable=var)
                 chk.pack(side="left", padx=10)
-                self.selection_vars[(i, type_code)] = var
 
     def toggle_all(self, state):
         for var in self.selection_vars.values():
@@ -592,7 +594,8 @@ class CalendarApp(ctk.CTk):
             has_selected_type = False
             
             for type_name, type_data in course['type'].items():
-                if self.selection_vars.get((i, type_name)).get():
+                sel_var = self.selection_vars.get((i, type_name))
+                if sel_var and sel_var.get():
                     new_course['type'][type_name] = type_data
                     has_selected_type = True
             
