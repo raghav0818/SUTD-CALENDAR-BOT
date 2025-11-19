@@ -4,13 +4,15 @@ A smart, automated desktop application for SUTD students to convert their class 
 
 ✨ Features
 
-Automated Extraction: Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback).
+🤖 Automated Extraction: Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback).
 
-Smart Date Logic: * Automatically detects and skips Recess Week (Week 7).
+🧠 Smart Date Logic:
+
+Automatically detects and skips Recess Week (Week 7).
 
 Fetches live Singapore Public Holiday data to skip classes on holidays.
 
-User-Friendly Customization:
+🎨 User-Friendly Customization:
 
 Rename Classes: Rename "10.009" to "Digital World" easily.
 
@@ -18,9 +20,9 @@ Filter Types: Uncheck specific class types (e.g., "Optional Lab") you don't want
 
 Persistent Memory: Remembers your custom names for the next term.
 
-Modern UI: Built with CustomTkinter for a clean, dark-mode compatible interface.
+💻 Modern UI: Built with CustomTkinter for a clean, dark-mode compatible interface.
 
-Robustness: Includes error logging, file permission checks, and auto-recovery if the browser closes unexpectedly.
+🛡️ Robustness: Includes error logging, file permission checks, and auto-recovery if the browser closes unexpectedly.
 
 🛠️ Prerequisites
 
@@ -28,7 +30,7 @@ Before running the bot, ensure you have the following installed:
 
 Python 3.10 or higher: Download Here
 
-Windows Users: Make sure to check "Add Python to PATH" during installation.
+Windows Users: Check "Add Python to PATH" during installation.
 
 Browser:
 
@@ -42,13 +44,11 @@ Download the repository (Code > Download ZIP) and Unzip it.
 
 Open the extracted folder.
 
-For Windows Users:
+For Windows Users 🪟
 
-Double-click the setup_windows.bat file.
+Double-click the setup_windows.bat file. It will automatically install all necessary libraries for you.
 
-It will automatically install all necessary libraries for you.
-
-For Mac Users:
+For Mac Users 🍎
 
 Open your Terminal app.
 
@@ -60,13 +60,13 @@ Press Enter.
 
 🚀 How to Use
 
-Run the script:
+1. Run the Script
 
-Windows: You can type python sutd_calendar_bot.py in cmd, or create a shortcut.
+Windows: Double-click run_bot.bat (if you made one) or type python sutd_calendar_bot.py in cmd.
 
 Mac: Run python3 sutd_calendar_bot.py in terminal.
 
-Login:
+2. Login
 
 Click "START LOGIN & SCAN".
 
@@ -74,7 +74,7 @@ A browser window will open. Manually log in to the SUTD portal and complete 2FA.
 
 Note: The bot waits for you to finish logging in.
 
-Customize:
+3. Customize
 
 Once the bot detects the schedule, the browser window will close.
 
@@ -84,7 +84,7 @@ Rename any subjects (e.g., change codes to names).
 
 Uncheck any classes you don't want to import.
 
-Generate:
+4. Generate
 
 Set your preferred Reminder time (default is 15 mins before class).
 
@@ -92,7 +92,7 @@ Click "GENERATE CALENDAR FILES".
 
 The folder containing your SUTD_Calendar.ics file will open automatically.
 
-Import:
+5. Import
 
 Drag and drop the .ics file into Google Calendar, Outlook, or Apple Calendar.
 
@@ -108,19 +108,25 @@ You do not need to edit this manually; the App handles it.
 
 🐞 Troubleshooting
 
-Mac Users (Safari Error): If using Safari, you must enable automation permissions once:
+Issue
 
-Open Safari > Settings > Advanced.
+Solution
 
-Check "Show Develop menu in menu bar".
+Mac Users (Safari Error)
 
-Click Develop in the top menu bar > Allow Remote Automation.
+Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
 
-"Browser window closed unexpectedly": Do not close the browser manually while it is navigating. Wait for the bot to close it.
+"Browser closed unexpectedly"
 
-"Cannot write to file": Ensure SUTD_Calendar.ics is not currently open in another program.
+Do not close the browser manually while it is navigating. Wait for the bot to close it.
 
-Check the Logs: If the app crashes, check sutd_bot.log in the same folder for detailed error messages.
+"Cannot write to file"
+
+Ensure SUTD_Calendar.ics is not currently open in another program.
+
+Crashes
+
+Check sutd_bot.log in the same folder for detailed error messages.
 
 📄 License
 
