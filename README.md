@@ -28,31 +28,43 @@ Before running the bot, ensure you have the following installed:
 
 Python 3.10 or higher: Download Here
 
+Windows Users: Make sure to check "Add Python to PATH" during installation.
+
 Browser:
 
 Windows: Google Chrome.
 
 Mac: Google Chrome (Preferred) or Safari.
 
-📦 Installation
+📦 Installation (Simpler Method)
 
-Clone the repository (or download the ZIP):
+Download the repository (Code > Download ZIP) and Unzip it.
 
-git clone [https://github.com/YOUR_USERNAME/SUTD-Calendar-Bot.git](https://github.com/YOUR_USERNAME/SUTD-Calendar-Bot.git)
-cd SUTD-Calendar-Bot
+Open the extracted folder.
 
+For Windows Users:
 
-Install dependencies:
+Double-click the setup_windows.bat file.
 
-pip install -r requirements.txt
+It will automatically install all necessary libraries for you.
 
+For Mac Users:
+
+Open your Terminal app.
+
+Type sh  (with a space after it).
+
+Drag and drop the setup_mac.sh file from Finder into the Terminal window.
+
+Press Enter.
 
 🚀 How to Use
 
 Run the script:
 
-python sutd_calendar_bot.py
+Windows: You can type python sutd_calendar_bot.py in cmd, or create a shortcut.
 
+Mac: Run python3 sutd_calendar_bot.py in terminal.
 
 Login:
 

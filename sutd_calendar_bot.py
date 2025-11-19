@@ -92,6 +92,7 @@ SG_HOLIDAYS = get_singapore_holidays()
 
 class SUTDCalendarBot:
     def __init__(self, log_callback=None):
+        # Using generic Remote driver to support both Chrome and Safari
         self.driver: Optional[webdriver.Remote] = None
         self.wait: Optional[WebDriverWait] = None
         self.weekday_map = ('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
@@ -107,7 +108,7 @@ class SUTDCalendarBot:
     def start_browser(self):
         self.log("Starting Browser...")
         
-        # 1. Try Chrome First (Preferred)
+        # --- 1. Try Chrome First (Windows & Mac Preferred) ---
         try:
             options = webdriver.ChromeOptions()
             options.add_experimental_option("detach", True)
@@ -118,10 +119,11 @@ class SUTDCalendarBot:
             return
         except Exception as e:
             logging.warning(f"Chrome failed to start: {e}")
-            self.log("Chrome not found/failed. Checking for Safari...")
+            self.log("Chrome not found or failed. Checking for alternatives...")
 
-        # 2. Fallback to Safari (macOS Only)
+        # --- 2. Fallback to Safari (macOS Only) ---
         if sys.platform == "darwin":
+            self.log("Attempting to launch Safari...")
             try:
                 self.driver = webdriver.Safari()
                 self.driver.maximize_window()
@@ -144,8 +146,8 @@ class SUTDCalendarBot:
                 logging.error(f"Safari failed: {e}")
                 raise RuntimeError(f"Safari failed to start. Error: {e}")
 
-        # 3. No browser found
-        raise RuntimeError("Could not find Google Chrome. Please install Chrome or enable Safari automation.")
+        # --- 3. No browser found ---
+        raise RuntimeError("Could not find Google Chrome. Please install Chrome (or enable Safari automation if on Mac).")
 
     def login_and_navigate(self) -> str:
         if not self.driver or not self.wait:
@@ -448,7 +450,6 @@ class CalendarApp(ctk.CTk):
         self.gen_btn = ctk.CTkButton(self.bottom_frame, text="GENERATE CALENDAR FILES", 
                                      command=self.generate_files, 
                                      font=("Roboto", 14, "bold"), 
-                                     # Removed overrides to use default theme color
                                      height=50, state="disabled")
         self.gen_btn.pack(side="right", padx=15, pady=15, fill="x", expand=True)
         
