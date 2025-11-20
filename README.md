@@ -3,12 +3,7 @@ SUTD Calendar Bot
 A smart, automated desktop application for SUTD students.
 Easily scrape your class schedule from the MyPortal website and convert it into a calendar-ready .ics format with smart holiday detection.
 
-<!--
-TIP: Take a screenshot of your app running and save it as 'https://www.google.com/search?q=screenshot.png' in your folder.
-Then uncomment the line below to display it.
--->
-
-<!--  -->
+<img width="2880" height="1715" alt="Screenshot 2025-11-20 091557" src="https://github.com/user-attachments/assets/096ce116-43af-4fbe-9676-d542e4cf1b59" />
 
 Automated Extraction
 Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback) to retrieve your schedule automatically.
