@@ -28,19 +28,19 @@ Windows Users: Check "Add Python to PATH" during installation.
 
 *Open the extracted folder.
 
-*For Windows Users
+* For Windows Users
 
-    *Double-click the setup_windows.bat file.
+    Double-click the setup_windows.bat file.
 
-*For Mac Users
+* For Mac Users
 
-    *Open your Terminal.
+    * Open your Terminal.
 
-    *Type sh  (with a space).
+    * Type sh  (with a space).
 
-    *Drag and drop the setup_mac.sh file into the terminal.
+    * Drag and drop the setup_mac.sh file into the terminal.
 
-    *Press Enter.
+    * Press Enter.
 
 This will automatically install all required libraries.
 
@@ -51,12 +51,12 @@ This will automatically install all required libraries.
 
 Windows: Double-click run_bot.bat (if created) or run in cmd:
 
-    *python sutd_calendar_bot.py
+    python sutd_calendar_bot.py
 
 
 Mac: Run in terminal:
 
-    *python3 sutd_calendar_bot.py
+    python3 sutd_calendar_bot.py
 
 
 2. Login & Scan
@@ -95,21 +95,21 @@ Note: You do not need to edit this manually.
 
 🐞 Troubleshooting
 
-*Mac Safari Error
+* Mac Safari Error
 
-    *Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
+Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
 
-*"Browser closed unexpectedly"
+* "Browser closed unexpectedly"
 
-    *Do not close the browser manually. Wait for the bot to close it.
+Do not close the browser manually. Wait for the bot to close it.
 
-*"Cannot write to file"
+* "Cannot write to file"
 
-    *Ensure SUTD_Calendar.ics is not open in another program.
+Ensure SUTD_Calendar.ics is not open in another program.
 
-*Crashes
+* Crashes
 
-    *Check sutd_bot.log in the folder for error details.
+Check sutd_bot.log in the folder for error details.
 
 📄 License
 
