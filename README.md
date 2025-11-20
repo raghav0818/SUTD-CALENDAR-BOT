@@ -24,9 +24,9 @@ Windows Users: Check "Add Python to PATH" during installation.
 
 📦 FIRST TIME Installation
 
-*Download this repository (Code > Download ZIP) and Unzip it.
+Download this repository (Code > Download ZIP) and Unzip it.
 
-*Open the extracted folder.
+Open the extracted folder.
 
 * For Windows Users
 
