@@ -10,43 +10,8 @@ Then uncomment the line below to display it.
 
 <!--  -->
 
-📖 Table of Contents
-
-Features
-
-Prerequisites
-
-Installation
-
-How to Use
-
-Configuration
-
-Troubleshooting
-
-License
-
-🌟 Features
-
 Automated Extraction
 Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback) to retrieve your schedule automatically.
-
-Smart Date Logic
-
-Automatically detects and skips Recess Week (Week 7).
-
-Fetches live Singapore Public Holiday data to exclude classes on holidays.
-
-User-Friendly Customization
-
-Rename Classes: Change codes like "10.009" to "The Digital World".
-
-Filter Types: Uncheck specific class types (e.g., "Optional Lab").
-
-Memory: The app remembers your custom names for the next term.
-
-Robust Design
-Includes error logging, file permission checks, and auto-recovery.
 
 🛠 Prerequisites
 
@@ -54,37 +19,31 @@ Before running the bot, ensure you have the following installed:
 
 Python 3.10 or higher
 
-Download Python Here
-
 Windows Users: Check "Add Python to PATH" during installation.
 
-Web Browser
 
-Windows: Google Chrome.
+📦 FIRST TIME Installation
 
-Mac: Google Chrome (Preferred) or Safari.
+*Download this repository (Code > Download ZIP) and Unzip it.
 
-📦 Installation
+*Open the extracted folder.
 
-Download this repository (Code > Download ZIP) and Unzip it.
+*For Windows Users
 
-Open the extracted folder.
+    *Double-click the setup_windows.bat file.
 
-For Windows Users
+*For Mac Users
 
-Double-click the setup_windows.bat file.
+    *Open your Terminal.
+
+    *Type sh  (with a space).
+
+    *Drag and drop the setup_mac.sh file into the terminal.
+
+    *Press Enter.
 
 This will automatically install all required libraries.
 
-For Mac Users
-
-Open your Terminal.
-
-Type sh  (with a space).
-
-Drag and drop the setup_mac.sh file into the terminal.
-
-Press Enter.
 
 🚀 How to Use
 
@@ -92,12 +51,12 @@ Press Enter.
 
 Windows: Double-click run_bot.bat (if created) or run in cmd:
 
-python sutd_calendar_bot.py
+    *python sutd_calendar_bot.py
 
 
 Mac: Run in terminal:
 
-python3 sutd_calendar_bot.py
+    *python3 sutd_calendar_bot.py
 
 
 2. Login & Scan
@@ -136,25 +95,21 @@ Note: You do not need to edit this manually.
 
 🐞 Troubleshooting
 
-Issue
+*Mac Safari Error
 
-Solution
+    *Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
 
-Mac Safari Error
+*"Browser closed unexpectedly"
 
-Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
+    *Do not close the browser manually. Wait for the bot to close it.
 
-"Browser closed unexpectedly"
+*"Cannot write to file"
 
-Do not close the browser manually. Wait for the bot to close it.
+    *Ensure SUTD_Calendar.ics is not open in another program.
 
-"Cannot write to file"
+*Crashes
 
-Ensure SUTD_Calendar.ics is not open in another program.
-
-Crashes
-
-Check sutd_bot.log in the folder for error details.
+    *Check sutd_bot.log in the folder for error details.
 
 📄 License
 
