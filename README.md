@@ -1,38 +1,62 @@
 SUTD Calendar Bot
 
-A smart, automated desktop application for SUTD students to convert their class schedules from the MyPortal website into a calendar-ready .ics format.
+A smart, automated desktop application for SUTD students.
+Easily scrape your class schedule from the MyPortal website and convert it into a calendar-ready .ics format with smart holiday detection.
+
+<!--
+TIP: Take a screenshot of your app running and save it as 'https://www.google.com/search?q=screenshot.png' in your folder.
+Then uncomment the line below to display it.
+-->
+
+<!--  -->
+
+📖 Table of Contents
 
 Features
 
+Prerequisites
+
+Installation
+
+How to Use
+
+Configuration
+
+Troubleshooting
+
+License
+
+🌟 Features
+
 Automated Extraction
-Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback) to retrieve your schedule.
+Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback) to retrieve your schedule automatically.
 
 Smart Date Logic
 
 Automatically detects and skips Recess Week (Week 7).
 
-Fetches live Singapore Public Holiday data to exclude classes falling on holidays.
+Fetches live Singapore Public Holiday data to exclude classes on holidays.
 
 User-Friendly Customization
 
-Rename Classes: Change course codes (e.g., "10.009") to readable names (e.g., "The Digital World").
+Rename Classes: Change codes like "10.009" to "The Digital World".
 
-Filter Types: Exclude specific class types (e.g., "Optional Lab") that you do not wish to import.
+Filter Types: Uncheck specific class types (e.g., "Optional Lab").
 
-Persistent Memory: The application saves your custom names and settings for the next term.
+Memory: The app remembers your custom names for the next term.
 
-Robustness
-Includes error logging, file permission checks, and auto-recovery mechanisms.
+Robust Design
+Includes error logging, file permission checks, and auto-recovery.
 
-Prerequisites
+🛠 Prerequisites
 
 Before running the bot, ensure you have the following installed:
 
 Python 3.10 or higher
 
-Download from python.org.
+Download Python Here
 
-Windows Users: Ensure you check "Add Python to PATH" during the installation process.
+Windows Users: Check "Add Python to PATH" during installation.
 
 Web Browser
 
@@ -40,85 +64,99 @@ Windows: Google Chrome.
 
 Mac: Google Chrome (Preferred) or Safari.
 
-Installation
+📦 Installation
 
-Download this repository (Code > Download ZIP) and Unzip it to a folder of your choice.
+Download this repository (Code > Download ZIP) and Unzip it.
 
 Open the extracted folder.
 
 For Windows Users
 
-Double-click the setup_windows.bat file. This script will automatically install all necessary Python libraries for you.
+Double-click the setup_windows.bat file.
+
+This will automatically install all required libraries.
 
 For Mac Users
 
-Open your Terminal app.
+Open your Terminal.
 
-Type sh  (ensure there is a space after "sh").
+Type sh  (with a space).
 
-Drag and drop the setup_mac.sh file from Finder into the Terminal window.
+Drag and drop the setup_mac.sh file into the terminal.
 
-Press Enter to run the installation script.
+Press Enter.
 
-How to Use
+🚀 How to Use
 
 1. Run the Application
 
-Windows: Double-click run_bot.bat (if available) or open a command prompt and type:
+Windows: Double-click run_bot.bat (if created) or run in cmd:
 
 python sutd_calendar_bot.py
 
 
-Mac: Open a terminal and type:
+Mac: Run in terminal:
 
 python3 sutd_calendar_bot.py
 
 
-2. Login
+2. Login & Scan
 
-Click the "START LOGIN & SCAN" button. A browser window will open. Manually log in to the SUTD portal and complete your 2FA verification. The bot will wait until it detects a successful login.
+Click "START LOGIN & SCAN".
 
-3. Customize Schedule
+A browser window will open.
 
-Once the schedule is detected, the browser will close, and the application window will expand.
+Manually log in to the SUTD portal and complete 2FA.
 
-Rename: Edit the text fields to rename your subjects.
+Note: The bot waits for you to finish logging in.
 
-Filter: Uncheck any classes or class types you do not wish to include in your calendar.
+3. Customize
 
-4. Generate Files
+Once the schedule is detected, the browser closes and the app expands.
 
-Set your preferred reminder time (default is 15 minutes). Click "GENERATE CALENDAR FILES". The folder containing your new SUTD_Calendar.ics file will open automatically.
+Rename: Edit text boxes to rename subjects.
 
-5. Import to Calendar
+Filter: Uncheck classes you don't want.
 
-Drag and drop the generated .ics file into Google Calendar, Outlook, or Apple Calendar to import your schedule.
+4. Generate
 
-Configuration
+Click "GENERATE CALENDAR FILES".
 
-The application creates a sutd_bot_config.json file after the first run. This file stores your renamed courses and default settings. You do not need to edit this file manually.
+The folder containing your SUTD_Calendar.ics file will open automatically.
 
-Troubleshooting
+Drag this file into Google Calendar, Outlook, or Apple Calendar.
 
-Mac Users (Safari Error)
-If the bot attempts to use Safari, you must enable automation permissions once:
+⚙ Configuration
 
-Open Safari > Settings > Advanced.
+The bot creates a sutd_bot_config.json file after the first run.
 
-Check "Show Develop menu in menu bar".
+What it does: Stores your renamed courses and settings.
 
-Click Develop in the top menu bar and check Allow Remote Automation.
+Note: You do not need to edit this manually.
+
+🐞 Troubleshooting
+
+Issue
+
+Solution
+
+Mac Safari Error
+
+Open Safari > Settings > Advanced > Check "Show Develop menu" > Click Develop > Check Allow Remote Automation.
 
 "Browser closed unexpectedly"
-Do not close the browser window manually while the bot is navigating. Wait for the application to close it automatically.
+
+Do not close the browser manually. Wait for the bot to close it.
 
 "Cannot write to file"
-Ensure SUTD_Calendar.ics is not currently open in another program.
 
-Crash / Unknown Error
-Check the sutd_bot.log file generated in the same folder for detailed error messages.
+Ensure SUTD_Calendar.ics is not open in another program.
 
-License
+Crashes
+
+Check sutd_bot.log in the folder for error details.
+
+📄 License
 
 This project is licensed under the MIT License.
 
