@@ -3,12 +3,7 @@ SUTD Calendar Bot
 A smart, automated desktop application for SUTD students.
 Easily scrape your class schedule from the MyPortal website and convert it into a calendar-ready .ics format with smart holiday detection.
 
-<!--
-TIP: Take a screenshot of your app running and save it as 'https://www.google.com/search?q=screenshot.png' in your folder.
-Then uncomment the line below to display it.
--->
-
-<!--  -->
+<img width="2880" height="1715" alt="Screenshot 2025-11-20 091557" src="https://github.com/user-attachments/assets/096ce116-43af-4fbe-9676-d542e4cf1b59" />
 
 Automated Extraction
 Logs into the SUTD portal via Chrome (Windows/Mac) or Safari (Mac Fallback) to retrieve your schedule automatically.
@@ -22,27 +17,23 @@ Python 3.10 or higher
 Windows Users: Check "Add Python to PATH" during installation.
 
 
-📦 FIRST TIME Installation
+📦 Installation
 
 Download this repository (Code > Download ZIP) and Unzip it.
 
 Open the extracted folder.
 
-* For Windows Users
+For ALL Users (Windows & Mac)
+We have included a universal installer script to automatically install the required libraries for you.
 
-    Double-click the setup_windows.bat file.
+Run the installer:
 
-* For Mac Users
+Windows: Double-click the install.py file.
 
-    * Open your Terminal.
+Mac: Right-click install.py > Select Open With > Python Launcher.
+(If that doesn't work, open Terminal and run python3 install.py)
 
-    * Type sh  (with a space).
-
-    * Drag and drop the setup_mac.sh file into the terminal.
-
-    * Press Enter.
-
-This will automatically install all required libraries.
+Wait for the "Success" message window or text.
 
 
 🚀 How to Use
