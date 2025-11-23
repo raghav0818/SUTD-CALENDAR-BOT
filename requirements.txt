@@ -1,5 +1,5 @@
 selenium>=4.0.0
 customtkinter>=5.2.0
 ics>=0.7
-arrow>=1.2.0
+arrow
 requests>=2.31.0

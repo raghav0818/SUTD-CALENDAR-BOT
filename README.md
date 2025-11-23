@@ -28,6 +28,10 @@ We have included a universal installer script to automatically install the requi
 
 Run the installer:
 
+Open the file in VScode(or any IDE) and run the install.py file
+
+OR
+
 Windows: Double-click the install.py file.
 
 Mac: Right-click install.py > Select Open With > Python Launcher.
@@ -40,10 +44,13 @@ Wait for the "Success" message window or text.
 
 1. Run the Application
 
-Windows: Double-click run_bot.bat (if created) or run in cmd:
+Run the file in VScode(or any IDE)
+
+OR
+
+Windows: run in cmd:
 
     python sutd_calendar_bot.py
-
 
 Mac: Run in terminal:
 
