@@ -38,7 +38,7 @@ def install():
         print("\n[SUCCESS] All dependencies installed successfully!")
         print("You can now run the bot:")
         if sys.platform == "win32":
-            print("   Double-click 'sutd_calendar_bot.py'")
+            print("   Run 'sutd_calendar_bot.py'")
         else:
             print("   Run: python3 sutd_calendar_bot.py")
             
