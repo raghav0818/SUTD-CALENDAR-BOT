@@ -4,8 +4,8 @@
 A simple, automated desktop tool for SUTD students.
 It logs into MyPortal, extracts your class timetable, and converts it into a calendar-ready `.ics` file — with smart holiday detection included.
 
-<img width="2758" height="1426" alt="image" src="https://github.com/user-attachments/assets/8ad52997-bae7-40f3-9a7e-b35895562281" />
 <img width="2880" height="1706" alt="image" src="https://github.com/user-attachments/assets/953ff768-92c0-4957-8b51-69d20b18f23f" />
+<img width="2764" height="1418" alt="image" src="https://github.com/user-attachments/assets/5524a45e-4435-4782-a3df-bd9f49b67775" />
 
 ---
 
