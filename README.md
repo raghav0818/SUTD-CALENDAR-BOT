@@ -235,6 +235,8 @@ Open `sutd_bot.log` for details.
 
 ## **📄 License**
 
-MIT License
+GNU GPLv3 License
 *This is a student-made project and is not officially affiliated with SUTD.*
 
+Credits: @Itsskiip on github for inspo and code
+https://github.com/Itsskiip/SUTDCalendarConverter/blob/main/convert.py

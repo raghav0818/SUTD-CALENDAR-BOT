@@ -1,3 +1,12 @@
+# Copyright (C) 2024 Itsskiip
+# Copyright (C) 2025 raghav0818
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License v3
+#
+# MODIFICATION NOTICE:
+# - Modified by raghav on 20/11/25: Created OOP system
+
 import re
 import os
 import sys
