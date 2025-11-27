@@ -113,7 +113,7 @@ python3 sutd_calendar_bot.py
 
 ---
 
-# **📅 How to Import the .ics File (Foolproof Guide)**
+# **📅 How to Import the .ics File (Step by step guide)**
 
 Below are step-by-step instructions for the 3 major calendar apps.
 
