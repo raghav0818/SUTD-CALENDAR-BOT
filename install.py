@@ -49,8 +49,5 @@ def install():
     except Exception as e:
         print(f"\n[ERROR] An unexpected error occurred: {e}")
 
-    print("")
-    input("Press Enter to close...")
-
 if __name__ == "__main__":
     install()

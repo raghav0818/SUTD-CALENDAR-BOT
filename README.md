@@ -19,7 +19,7 @@ Windows Users: Check "Add Python to PATH" during installation.
 
 📦 Installation
 
-Download this repository (Code > Download ZIP) and Unzip it.
+Download this repository (Code > Download ZIP) and extract folder.
 
 Open the extracted folder.
 
@@ -28,7 +28,7 @@ We have included a universal installer script to automatically install the requi
 
 Run the installer:
 
-Open the file in VScode(or any IDE) and run the install.py file
+Open the intall.py file in VScode(or any IDE) and run the install.py file
 
 OR
 
@@ -44,7 +44,7 @@ Wait for the "Success" message window or text.
 
 1. Run the Application
 
-Run the file in VScode(or any IDE)
+Run the sutd_calendar_bot.py file in VScode(or any IDE)
 
 OR
 
