@@ -1,7 +1,3 @@
-Here is a **cleaned-up, clearer, more structured, and more user-friendly** version of your README.
-I kept all your original information, but rewrote it for maximum readability, flow, and ease of use.
-
----
 
 # **SUTD Calendar Bot**
 
@@ -47,11 +43,8 @@ Before running the bot, make sure you have:
    * Open `install.py`
    * Click Run
 
-   **Option B: Double-click (Windows only)**
 
-   * Double-click `install.py`
-
-   **Option C: From Terminal**
+   **Option B: From Terminal**
 
    **Windows:**
 
