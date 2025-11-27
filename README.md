@@ -241,3 +241,4 @@ Open `sutd_bot.log` for details.
 MIT License
 *This is a student-made project and is not officially affiliated with SUTD.*
 
+Credits: @Itsskiip on github for inspo and code
