@@ -8,20 +8,17 @@ It logs into MyPortal, extracts your class timetable, and converts it into a cal
 
 ## **✨ Features**
 
-* **Automatic Schedule Extraction**
-  Logs into MyPortal via Chrome (Windows/Mac) or Safari (Mac fallback).
-* **Calendar File Generation**
-  Exports your schedule into `.ics`, which works with Google Calendar, Outlook, and Apple Calendar.
-* **Smart Customization**
-  Rename modules and deselect classes before generating your calendar.
-* **Automatic Config Saving**
-  Course names and settings are remembered for future use.
+* **Automatic Schedule Extraction** via browser automation
+* **One-click Calendar File Generation** (`.ics`)
+* **Rename & Filter Classes** before export
+* **Saves Preferences Automatically** (`sutd_bot_config.json`)
+* **Works on Windows & macOS**
 
 ---
 
 ## **🛠 Prerequisites**
 
-Before running the bot, make sure you have:
+Make sure you have:
 
 * **Python 3.10 or higher**
   **Windows users:** Select **“Add Python to PATH”** during installation.
@@ -30,54 +27,56 @@ Before running the bot, make sure you have:
 
 ## **📦 Installation**
 
-1. **Download the repository**
-   Click *Code → Download ZIP* and extract it.
+### **1. Download the Bot**
 
-2. **Open the extracted folder**
+* Click **Code → Download ZIP**
+* Extract the ZIP
 
-3. **Install required libraries (Universal Installer)**
-   You can run `install.py` in any of these ways:
+### **2. Install Required Libraries**
 
-   **Option A: Through an IDE (VS Code, PyCharm, etc.)**
+Run `install.py` using *any* of the following methods:
 
-   * Open `install.py`
-   * Click Run
+#### **Option A — Using VS Code / IDE**
 
+* Open `install.py`
+* Click **Run**
 
-   **Option B: From Terminal**
+#### **Option B — Windows Only**
 
-   **Windows:**
+* Double-click `install.py`
 
-   ```
-   python install.py
-   ```
+#### **Option C — Using Terminal**
 
-   **Mac:**
+**Windows:**
 
-   ```
-   python3 install.py
-   ```
+```
+python install.py
+```
 
-   Wait until you see the **“Success”** message.
+**Mac:**
+
+```
+python3 install.py
+```
+
+Wait for the **“Success”** message.
 
 ---
 
-## **🚀 How to Use**
+## **🚀 How to Use the Bot**
 
-### **1. Run the Application**
+### **1. Launch the app**
 
-**Option A: IDE**
+**Option A — IDE**
 Run `sutd_calendar_bot.py`
 
-**Option B: Command Line**
-
-**Windows:**
+**Option B — Windows Command Prompt**
 
 ```
 python sutd_calendar_bot.py
 ```
 
-**Mac:**
+**Option C — Mac Terminal**
 
 ```
 python3 sutd_calendar_bot.py
@@ -87,50 +86,128 @@ python3 sutd_calendar_bot.py
 
 ### **2. Login & Scan**
 
-* Click **“START LOGIN & SCAN”**
-* A browser window will open
-* Log in to MyPortal manually and complete 2FA
-  *(The bot waits for you—just log in normally)*
-
-Once your timetable is detected, the bot will:
-
-* Close the browser automatically
-* Expand the app window to show your timetable
+1. Click **START LOGIN & SCAN**
+2. A browser window will open
+3. Log in manually to MyPortal (including 2FA)
+4. Wait—**do not close the browser**
+5. The bot closes it automatically once done
+6. The app expands and your schedule appears
 
 ---
 
-### **3. Customize Your Schedule**
+### **3. Customize**
 
-* **Rename modules** by editing the text fields
-* **Uncheck** any classes you want to exclude
+* **Rename courses** by editing the text boxes
+* **Uncheck** classes you want to exclude
 
 ---
 
-### **4. Generate Calendar**
+### **4. Generate Calendar File**
 
-Click **“GENERATE CALENDAR FILES”**
+* Click **GENERATE CALENDAR FILES**
+* A folder will open containing:
 
-The folder containing **SUTD_Calendar.ics** will open automatically.
+  ```
+  SUTD_Calendar.ics
+  ```
 
-Drag the `.ics` file into:
+---
 
-* Google Calendar
-* Apple Calendar
-* Outlook
-  or any other calendar app.
+# **📅 How to Import the .ics File (Foolproof Guide)**
+
+Below are step-by-step instructions for the 3 major calendar apps.
+
+---
+
+# **📌 Importing into Google Calendar (Desktop)**
+
+### **Method 1 — Drag and Drop (Easiest)**
+
+1. Open **Google Calendar** in a browser
+2. Open the folder containing `SUTD_Calendar.ics`
+3. Drag the `.ics` file into the Google Calendar window
+4. Google will ask which calendar to add it to
+5. Click **Add to calendar**
+
+---
+
+### **Method 2 — Import Menu**
+
+1. Go to **Google Calendar**
+2. On the left, click the **gear icon → Settings**
+3. Select **Import & Export**
+4. Under *Import*, click **Select file from your computer**
+5. Choose `SUTD_Calendar.ics`
+6. Choose which calendar to import into
+7. Click **Import**
+
+Done!
+
+---
+
+# **🍎 Importing into Apple Calendar (Mac)**
+
+### **Method 1 — Double-click (Easiest)**
+
+1. Double-click `SUTD_Calendar.ics`
+2. Apple Calendar will open
+3. Choose which calendar to add it to
+4. Click **OK**
+
+---
+
+### **Method 2 — From Within Apple Calendar**
+
+1. Open **Calendar** app
+2. Click **File → Import…**
+3. Select `SUTD_Calendar.ics`
+4. Choose the target calendar
+5. Click **Import**
+
+---
+
+# **📧 Importing into Outlook**
+
+### **Outlook Desktop App (Windows/Mac)**
+
+1. Open **Outlook**
+2. Go to **File → Open & Export**
+3. Click **Import/Export**
+4. Choose **Import an iCalendar (.ics)**
+5. Select `SUTD_Calendar.ics`
+6. Choose:
+
+   * **Open as New** (recommended)
+   * or **Import** into an existing calendar
+7. Click **OK**
+
+---
+
+### **Outlook Web (Outlook.com)**
+
+1. Go to **Outlook.com → Calendar**
+2. On the left, click **Add calendar**
+3. Select **Upload from file**
+4. Choose `SUTD_Calendar.ics`
+5. Select calendar destination
+6. Click **Import**
 
 ---
 
 ## **⚙ Configuration File**
 
-A file named `sutd_bot_config.json` is created after your first run.
+The bot automatically creates:
+
+```
+sutd_bot_config.json
+```
 
 It stores:
 
 * Renamed module titles
-* Saved preferences
+* Filter settings
 
-No manual editing is needed — the bot handles everything.
+You **don’t need to modify** this manually.
 
 ---
 
@@ -138,29 +215,26 @@ No manual editing is needed — the bot handles everything.
 
 ### **Mac Safari Automation Error**
 
-1. Open **Safari → Settings → Advanced**
-2. Enable **“Show Develop menu”**
-3. Go to **Develop → Allow Remote Automation**
+1. Safari → Settings → Advanced
+2. Check **Show Develop menu**
+3. Develop → **Allow Remote Automation**
 
 ### **“Browser closed unexpectedly”**
 
 Do **not** close the browser manually.
-Let the bot close it after scanning.
 
 ### **“Cannot write to file”**
 
-Close any app currently using `SUTD_Calendar.ics` (Google Calendar, Outlook, etc.).
+Close any app currently using the `.ics` file.
 
 ### **Crashes**
 
-Check `sutd_bot.log` in the project folder for details.
+Open `sutd_bot.log` for details.
 
 ---
 
 ## **📄 License**
 
-This project is released under the **MIT License**.
-
-**Disclaimer:** This is a student-made tool and is *not* officially affiliated with SUTD. Please use it responsibly.
-
+MIT License
+*This is a student-made project and is not officially affiliated with SUTD.*
 
