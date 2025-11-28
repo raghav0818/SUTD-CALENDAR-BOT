@@ -44,11 +44,7 @@ Run `install.py` using *any* of the following methods:
 * Open `install.py`
 * Click **Run**
 
-#### **Option B — Windows Only**
-
-* Double-click `install.py`
-
-#### **Option C — Using Terminal**
+#### **Option B — Using Terminal**
 
 **Windows:**
 
