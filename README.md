@@ -92,7 +92,7 @@ python3 sutd_calendar_bot.py
 1. Click **START LOGIN & SCAN**
 2. A browser window will open
 3. Log in manually to MyPortal (including 2FA)
-4. Wait—**do not close the browser**
+4. Wait **do not close the browser**
 5. The bot closes it automatically once done
 6. The app expands and your schedule appears
 
@@ -113,13 +113,6 @@ python3 sutd_calendar_bot.py
   ```
   SUTD_Calendar.ics
   ```
-
----
-
-# **📅 How to Import the .ics File (Step by step guide)**
-
-Below are step-by-step instructions for the 3 major calendar apps.
-
 ---
 
 # **📌 Importing into Google Calendar (Desktop)**
