@@ -3,20 +3,81 @@
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License v3
-#
-# MODIFICATION NOTICE:
-# - Modified by raghav on 20/11/25: Created OOP system
+
+import subprocess
+import sys
+import os
+import time
+import importlib.util
+
+# --- PART 1: SELF-INSTALLER & DEPENDENCY CHECK ---
+# This section runs BEFORE any external libraries are imported.
+# It ensures the environment is ready for the bot.
+
+REQUIRED_PACKAGES = {
+    "selenium": "selenium>=4.0.0",
+    "customtkinter": "customtkinter>=5.2.0",
+    "ics": "ics>=0.7",
+    "arrow": "arrow",
+    "requests": "requests>=2.31.0",
+    "urllib3": "urllib3==1.26.18" # Specific version for stability
+}
+
+def check_and_install_dependencies():
+    """Checks if required packages are installed. If not, installs them."""
+    missing = []
+    for package_name, install_name in REQUIRED_PACKAGES.items():
+        if importlib.util.find_spec(package_name) is None:
+            missing.append(install_name)
+    
+    if missing:
+        print("==================================================")
+        print("   SUTD Calendar Bot - First Run Setup")
+        print("==================================================")
+        print(f"Missing dependencies detected: {', '.join(missing)}")
+        print("Installing them now... (This may take a minute)")
+        print("")
+
+        try:
+            # Construct pip install command
+            cmd = [sys.executable, "-m", "pip", "install"] + missing
+            
+            # Mac/Linux often needs --user to avoid permission errors
+            if sys.platform != "win32":
+                cmd.append("--user")
+
+            subprocess.check_call(cmd)
+            print("\n[SUCCESS] Dependencies installed!")
+            print("Restarting the bot to apply changes...")
+            print("==================================================")
+            time.sleep(2)
+            
+            # Restart the script to load new libraries
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+            
+        except subprocess.CalledProcessError as e:
+            print(f"\n[ERROR] Auto-install failed with error code {e.returncode}.")
+            print("Please try running this command manually:")
+            print(f"   {sys.executable} -m pip install -r requirements.txt")
+            input("Press Enter to exit...")
+            sys.exit(1)
+        except Exception as e:
+            print(f"\n[ERROR] Unexpected setup error: {e}")
+            input("Press Enter to exit...")
+            sys.exit(1)
+
+# Run the check immediately
+check_and_install_dependencies()
+
+# --- PART 2: MAIN APPLICATION ---
+# Now that dependencies are guaranteed, we can import them safely.
 
 import re
-import os
-import sys
-import time
 import json
 import arrow
 import threading
 import logging
 import requests
-import subprocess
 import customtkinter as ctk
 from tkinter import messagebox
 from datetime import date, timedelta, datetime, time as dt_time
@@ -34,9 +95,17 @@ from selenium.common.exceptions import TimeoutException, WebDriverException, Ses
 from ics import Calendar, Event
 from ics.alarm import DisplayAlarm
 
-# --- 1. LOGGING CONFIGURATION ---
+
+# --- LOGGING CONFIGURATION ---
+def get_log_path():
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, 'sutd_bot.log')
+
 logging.basicConfig(
-    filename='sutd_bot.log',
+    filename=get_log_path(),
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
@@ -60,15 +129,6 @@ TYPE_MAPPING = {
     "REC": "Recitation",
     "TES": "Test/Exam"
 }
-
-# --- 2. EXECUTABLE PATH HELPER ---
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    # PyInstaller creates a temporary folder and stores path in _MEIPASS
-    base_path = getattr(sys, '_MEIPASS', None)
-    if not base_path:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
 
 # --- 3. DYNAMIC HOLIDAY API ---
 def get_singapore_holidays() -> set[date]:
@@ -100,7 +160,6 @@ SG_HOLIDAYS = get_singapore_holidays()
 
 class SUTDCalendarBot:
     def __init__(self, log_callback=None):
-        # Using generic Remote driver to support both Chrome and Safari
         self.driver: Optional[webdriver.Remote] = None
         self.wait: Optional[WebDriverWait] = None
         self.weekday_map = ('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
@@ -139,7 +198,6 @@ class SUTDCalendarBot:
                 self.log("Safari started successfully.")
                 return
             except SessionNotCreatedException:
-                # Common error: User hasn't enabled automation in Safari
                 error_msg = (
                     "Safari Automation is not enabled.\n\n"
                     "Please enable it:\n"
@@ -358,7 +416,6 @@ class SUTDCalendarBot:
 
             cal.events.add(e)
 
-        # --- ROBUSTNESS: File Permission Check ---
         try:
             with open(OUTPUT_ICS, 'w', encoding='utf-8') as f:
                 f.write(cal.serialize())
@@ -449,7 +506,6 @@ class CalendarApp(ctk.CTk):
 
         ctk.CTkLabel(self.bottom_frame, text="Reminder (min):").pack(side="left", padx=(15, 5))
         
-        # Load default reminder from config or default to 15
         saved_reminder = self.config_data.get("settings", {}).get("default_reminder", 15)
         self.reminder_var = ctk.StringVar(value=str(saved_reminder))
         self.rem_entry = ctk.CTkEntry(self.bottom_frame, textvariable=self.reminder_var, width=50)
@@ -476,13 +532,11 @@ class CalendarApp(ctk.CTk):
         return {}
 
     def save_config(self, processed_courses, reminder_val):
-        config = self.config_data # Load existing to preserve other keys if any
+        config = self.config_data
         
-        # Save Global Settings
         if "settings" not in config: config["settings"] = {}
         config["settings"]["default_reminder"] = reminder_val
 
-        # Save Course Preferences
         if "courses" not in config: config["courses"] = {}
         for c in processed_courses:
             config["courses"][c['code']] = {
@@ -547,7 +601,6 @@ class CalendarApp(ctk.CTk):
         
         self.update_log("Review courses and generate.")
 
-        # --- ROBUSTNESS: Handle Empty Course List ---
         if not courses:
              ctk.CTkLabel(self.scroll_area, text="No courses found in schedule!", text_color="red").pack(pady=20)
              self.gen_btn.configure(state="disabled")
@@ -562,7 +615,6 @@ class CalendarApp(ctk.CTk):
             
             ctk.CTkLabel(header, text=course['code'], font=("Roboto", 12, "bold"), text_color="gray").pack(side="left")
             
-            # Load saved name from new config structure
             saved_courses = self.config_data.get("courses", {})
             saved_info = saved_courses.get(course['code'], {})
             default_name = saved_info.get("custom_name", course['name'])
@@ -577,13 +629,11 @@ class CalendarApp(ctk.CTk):
             chk_frame.pack(fill="x", padx=10, pady=5)
 
             for type_code in course['type'].keys():
-                # Ensure friendly_name is always a string to satisfy CTkCheckBox
-                friendly_name = str(TYPE_MAPPING.get(type_code) or type_code)
+                friendly_name = TYPE_MAPPING.get(type_code, type_code)
                 var = ctk.BooleanVar(value=True)
-                # Register variable before widget creation so lookups are safe
-                self.selection_vars[(i, type_code)] = var
                 chk = ctk.CTkCheckBox(chk_frame, text=friendly_name, variable=var)
                 chk.pack(side="left", padx=10)
+                self.selection_vars[(i, type_code)] = var
 
     def toggle_all(self, state):
         for var in self.selection_vars.values():
@@ -602,8 +652,7 @@ class CalendarApp(ctk.CTk):
             has_selected_type = False
             
             for type_name, type_data in course['type'].items():
-                sel_var = self.selection_vars.get((i, type_name))
-                if sel_var and sel_var.get():
+                if self.selection_vars.get((i, type_name)).get():
                     new_course['type'][type_name] = type_data
                     has_selected_type = True
             
@@ -618,7 +667,6 @@ class CalendarApp(ctk.CTk):
             except ValueError:
                 rem_mins = 15
             
-            # Save Config before work (Robustness)
             self.save_config(filtered_courses, rem_mins)
 
             events = self.bot.expand_events(filtered_courses, reminder_minutes=rem_mins)
@@ -626,11 +674,10 @@ class CalendarApp(ctk.CTk):
             
             self.withdraw()
             
-            # --- USER FRIENDLY: Auto-Open Folder ---
             output_dir = os.path.abspath(".")
-            if os.name == 'nt': # Windows
+            if os.name == 'nt':
                 os.startfile(output_dir)
-            elif os.name == 'posix': # MacOS/Linux
+            elif os.name == 'posix':
                 try:
                     subprocess.call(['open', output_dir])
                 except:

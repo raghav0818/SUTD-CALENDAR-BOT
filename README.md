@@ -1,234 +1,155 @@
+# SUTD Calendar Bot
 
-# **SUTD Calendar Bot**
+A smart, automated desktop application for **SUTD students**.
 
-A simple, automated desktop tool for SUTD students.
-It logs into MyPortal, extracts your class timetable, and converts it into a calendar-ready `.ics` file — with smart holiday detection included.
-
-<img width="2880" height="1706" alt="image" src="https://github.com/user-attachments/assets/953ff768-92c0-4957-8b51-69d20b18f23f" />
-<img width="2764" height="1418" alt="image" src="https://github.com/user-attachments/assets/5524a45e-4435-4782-a3df-bd9f49b67775" />
+Easily scrape your class schedule from the **MyPortal** website and convert it into a calendar-ready **.ics** file — with **smart holiday detection** built in.
 
 ---
 
-## **✨ Features**
+## 📖 Table of Contents
 
-* **Automatic Schedule Extraction** via browser automation
-* **One-click Calendar File Generation** (`.ics`)
-* **Rename & Filter Classes** before export
-* **Saves Preferences Automatically** (`sutd_bot_config.json`)
-* **Works on Windows & macOS**
+* [Features](#-features)
+* [Prerequisites](#-prerequisites)
+* [Installation & Usage](#-installation--usage)
 
----
-
-## **🛠 Prerequisites**
-
-Make sure you have:
-
-* **Python 3.10 or higher**
-  **Windows users:** Select **“Add Python to PATH”** during installation.
+  * [Windows](#-for-windows-users-easiest-method)
+  * [macOS](#-for-mac-users-source-code-method)
+* [How It Works](#-how-it-works)
+* [Configuration](#-configuration)
+* [Troubleshooting](#-troubleshooting)
+* [License](#-license)
 
 ---
 
-## **📦 Installation**
+## 🌟 Features
 
-### **1. Download the Bot**
+### 🔐 Automated Extraction
 
-* Click **Code → Download ZIP**
-* Extract the ZIP
+* Logs into the SUTD portal via:
 
-### **2. Install Required Libraries**
+  * **Chrome** (Windows & macOS)
+  * **Safari** (macOS fallback)
+* Automatically retrieves your class schedule.
 
-Run `install.py` using *any* of the following methods:
+### 📅 Smart Date Logic
 
-#### **Option A — Using VS Code / IDE**
+* Automatically detects and **skips Recess Week (Week 7)**.
+* Fetches **live Singapore Public Holiday** data and excludes classes on those days.
 
-* Open `install.py`
-* Click **Run**
+### 🎛 User-Friendly Customization
 
-#### **Option B — Using Terminal**
+* **Rename Classes**: Change codes like `10.009` to `The Digital World`.
+* **Filter Types**: Uncheck specific class types (e.g. *Optional Lab*).
+* **Memory**: Remembers your custom names and preferences for the next term.
 
-**Windows:**
+### 🛡 Robust Design
 
-```
-python install.py
-```
-
-**Mac:**
-
-```
-python3 install.py
-```
-
-Wait for the **“Success”** message.
+* Self-healing dependency installation.
+* Error logging and auto-recovery.
 
 ---
 
-## **🚀 How to Use the Bot**
+## 🛠 Prerequisites
 
-### **1. Launch the app**
+### 🌐 Web Browser
 
-**Option A — IDE**
-Run `sutd_calendar_bot.py`
+* **Windows**: Google Chrome
+* **macOS**: Google Chrome *(preferred)* or Safari
 
-**Option B — Windows Command Prompt**
+### 🐍 Python (macOS Users Only)
 
-```
-python sutd_calendar_bot.py
-```
-
-**Option C — Mac Terminal**
-
-```
-python3 sutd_calendar_bot.py
-```
+* Python **3.10+** must be installed.
 
 ---
 
-### **2. Login & Scan**
+## 📦 Installation & Usage
 
-1. Click **START LOGIN & SCAN**
-2. A browser window will open
-3. Log in manually to MyPortal (including 2FA)
-4. Wait **do not close the browser**
-5. The bot closes it automatically once done
-6. The app expands and your schedule appears
+### 🪟 For Windows Users (Easiest Method)
 
----
+No installation required!
 
-### **3. Customize**
+1. Download the latest `sutd_calendar_bot.exe` from the **Releases** page.
+2. Double-click the `.exe` to run it.
+3. If you see a warning:
 
-* **Rename courses** by editing the text boxes
-* **Uncheck** classes you want to exclude
+   * Click **More Info** → **Run Anyway**.
 
 ---
 
-### **4. Generate Calendar File**
+### 🍎 For macOS Users (Source Code Method)
 
-* Click **GENERATE CALENDAR FILES**
-* A folder will open containing:
+Since `.exe` files do not run on macOS:
 
-  ```
-  SUTD_Calendar.ics
-  ```
----
+1. Download this repository (**Code → Download ZIP**) and unzip it.
+2. Open **Terminal**.
+3. Type:
 
-# **📌 Importing into Google Calendar (Desktop)**
+   ```bash
+   python3
+   ```
 
-### **Method 1 — Drag and Drop (Easiest)**
+   *(Make sure there is a space after `python3`)*
+4. Drag `sutd_calendar_bot.py` into the Terminal window.
+5. Press **Enter**.
 
-1. Open **Google Calendar** in a browser
-2. Open the folder containing `SUTD_Calendar.ics`
-3. Drag the `.ics` file into the Google Calendar window
-4. Google will ask which calendar to add it to
-5. Click **Add to calendar**
+> 💡 The script includes a **self-installer**. On first run, it automatically installs all required dependencies.
 
 ---
 
-### **Method 2 — Import Menu**
+## 🚀 How It Works
 
-1. Go to **Google Calendar**
-2. On the left, click the **gear icon → Settings**
-3. Select **Import & Export**
-4. Under *Import*, click **Select file from your computer**
-5. Choose `SUTD_Calendar.ics`
-6. Choose which calendar to import into
-7. Click **Import**
+1. **Login & Scan**
 
-Done!
+   * Click **START LOGIN & SCAN**.
+   * A browser window opens — log in to the SUTD portal manually.
+   * The bot waits patiently for you.
 
----
+2. **Customize**
 
-# **🍎 Importing into Apple Calendar (Mac)**
+   * Once logged in, the browser closes automatically.
+   * Rename subjects and uncheck classes you don’t want.
 
-### **Method 1 — Double-click (Easiest)**
+3. **Generate**
 
-1. Double-click `SUTD_Calendar.ics`
-2. Apple Calendar will open
-3. Choose which calendar to add it to
-4. Click **OK**
+   * Click **GENERATE CALENDAR FILES**.
+   * A folder opens containing `SUTD_Calendar.ics`.
 
----
+4. **Import**
 
-### **Method 2 — From Within Apple Calendar**
-
-1. Open **Calendar** app
-2. Click **File → Import…**
-3. Select `SUTD_Calendar.ics`
-4. Choose the target calendar
-5. Click **Import**
+   * Drag the `.ics` file into **Google Calendar**, **Outlook**, or **Apple Calendar**.
 
 ---
 
-# **📧 Importing into Outlook**
+## ⚙ Configuration
 
-### **Outlook Desktop App (Windows/Mac)**
-
-1. Open **Outlook**
-2. Go to **File → Open & Export**
-3. Click **Import/Export**
-4. Choose **Import an iCalendar (.ics)**
-5. Select `SUTD_Calendar.ics`
-6. Choose:
-
-   * **Open as New** (recommended)
-   * or **Import** into an existing calendar
-7. Click **OK**
-
----
-
-### **Outlook Web (Outlook.com)**
-
-1. Go to **Outlook.com → Calendar**
-2. On the left, click **Add calendar**
-3. Select **Upload from file**
-4. Choose `SUTD_Calendar.ics`
-5. Select calendar destination
-6. Click **Import**
-
----
-
-## **⚙ Configuration File**
-
-The bot automatically creates:
+After the first run, the bot creates:
 
 ```
 sutd_bot_config.json
 ```
 
-It stores:
+**What it does:**
 
-* Renamed module titles
-* Filter settings
+* Stores renamed courses and user preferences.
 
-You **don’t need to modify** this manually.
-
----
-
-## **🐞 Troubleshooting**
-
-### **Mac Safari Automation Error**
-
-1. Safari → Settings → Advanced
-2. Check **Show Develop menu**
-3. Develop → **Allow Remote Automation**
-
-### **“Browser closed unexpectedly”**
-
-Do **not** close the browser manually.
-
-### **“Cannot write to file”**
-
-Close any app currently using the `.ics` file.
-
-### **Crashes**
-
-Open `sutd_bot.log` for details.
+> ⚠️ You do **not** need to edit this file manually.
 
 ---
 
-## **📄 License**
+## 🐞 Troubleshooting
 
-GNU GPLv3 License
-*This is a student-made project and is not officially affiliated with SUTD.*
+| Issue                           | Solution                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **macOS Safari Error**          | Safari → Settings → Advanced → Enable **Show Develop menu** → Develop → **Allow Remote Automation** |
+| **Browser closed unexpectedly** | Do not close the browser manually. Let the bot close it.                                            |
+| **Cannot write to file**        | Ensure `SUTD_Calendar.ics` is not open elsewhere.                                                   |
+| **Crashes**                     | Check `sutd_bot.log` in the app folder for details.                                                 |
 
-Credits: @Itsskiip on github for inspo and code
-https://github.com/Itsskiip/SUTDCalendarConverter/blob/main/convert.py
+---
+
+## 📄 License
+
+This project is licensed under the **GNU General Public License v3**.
+
+**Disclaimer:**
+This is a **student-made project** and is **not officially endorsed by SUTD**. Please use it responsibly.
