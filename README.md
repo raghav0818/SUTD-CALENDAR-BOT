@@ -2,7 +2,8 @@
 
 Automated schedule generator for SUTD students.
 
-![Bot Demo]()
+![Bot Demo](https://github.com/user-attachments/assets/9ec3695e-0d96-417b-926b-889db24203f9)
+
 
 ## 🚀 How to Run
 
