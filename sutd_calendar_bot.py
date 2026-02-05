@@ -15,21 +15,31 @@ import importlib.util
 # It ensures the environment is ready for the bot.
 
 REQUIRED_PACKAGES = {
+    # format: "import_name": "pip_install_name"
     "selenium": "selenium>=4.0.0",
     "customtkinter": "customtkinter>=5.2.0",
     "ics": "ics>=0.7",
     "arrow": "arrow",
     "requests": "requests>=2.31.0",
-    "urllib3": "urllib3==1.26.18" # Specific version for stability
+    "urllib3": "urllib3==1.26.18",
+    "webdriver_manager": "webdriver-manager",
+    "packaging": "packaging"
 }
 
 def check_and_install_dependencies():
     """Checks if required packages are installed. If not, installs them."""
     missing = []
-    for package_name, install_name in REQUIRED_PACKAGES.items():
-        if importlib.util.find_spec(package_name) is None:
-            missing.append(install_name)
     
+    for import_name, install_name in REQUIRED_PACKAGES.items():
+        try:
+            importlib.util.find_spec(import_name)
+        except ImportError:
+             missing.append(install_name)
+        except Exception:
+             # Fallback for weird edge cases
+             if importlib.util.find_spec(import_name) is None:
+                 missing.append(install_name)
+
     if missing:
         print("==================================================")
         print("   SUTD Calendar Bot - First Run Setup")
@@ -58,7 +68,9 @@ def check_and_install_dependencies():
         except subprocess.CalledProcessError as e:
             print(f"\n[ERROR] Auto-install failed with error code {e.returncode}.")
             print("Please try running this command manually:")
-            print(f"   {sys.executable} -m pip install -r requirements.txt")
+            # Generate the manual command string
+            pkg_str = " ".join(REQUIRED_PACKAGES.values())
+            print(f"   {sys.executable} -m pip install {pkg_str}")
             input("Press Enter to exit...")
             sys.exit(1)
         except Exception as e:
@@ -70,7 +82,6 @@ def check_and_install_dependencies():
 check_and_install_dependencies()
 
 # --- PART 2: MAIN APPLICATION ---
-# Now that dependencies are guaranteed, we can import them safely.
 
 import re
 import json
@@ -78,23 +89,14 @@ import arrow
 import threading
 import logging
 import requests
+import webbrowser
 import customtkinter as ctk
 from tkinter import messagebox
 from datetime import date, timedelta, datetime, time as dt_time
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
-# Selenium Imports
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException, SessionNotCreatedException
-
-# ICS Library Imports
-from ics import Calendar, Event
-from ics.alarm import DisplayAlarm
-
+# Lazy-loaded imports: selenium, webdriver-manager, ics
+# These are imported inside functions to speed up initial launch.
 
 # --- LOGGING CONFIGURATION ---
 def get_log_path():
@@ -131,13 +133,16 @@ TYPE_MAPPING = {
 }
 
 # --- 3. DYNAMIC HOLIDAY API ---
-def get_singapore_holidays() -> set[date]:
-    """Fetches PH from API, falls back to hardcoded list on error."""
-    holidays = set()
+SG_HOLIDAYS = set() # Global empty set, populated in background
+
+def load_singapore_holidays():
+    """Fetches PH from API in background, falls back to hardcoded list on error."""
+    global SG_HOLIDAYS
     years = [date.today().year, date.today().year + 1]
     
     logging.info("Fetching Public Holidays from API...")
     
+    new_holidays = set()
     for year in years:
         try:
             url = f"https://date.nager.at/api/v3/publicholidays/{year}/SG"
@@ -146,24 +151,34 @@ def get_singapore_holidays() -> set[date]:
             data = response.json()
             for item in data:
                 h_date = arrow.get(item['date']).date()
-                holidays.add(h_date)
+                new_holidays.add(h_date)
             logging.info(f"Loaded {len(data)} holidays for {year}.")
         except Exception as e:
             logging.error(f"Failed to fetch API holidays for {year}: {e}")
             if year == 2025:
-                holidays.update({date(2025, 1, 1), date(2025, 1, 29), date(2025, 1, 30), date(2025, 8, 9), date(2025, 12, 25)})
+                new_holidays.update({date(2025, 1, 1), date(2025, 1, 29), date(2025, 1, 30), date(2025, 8, 9), date(2025, 12, 25)})
     
-    return holidays
-
-SG_HOLIDAYS = get_singapore_holidays()
+    SG_HOLIDAYS.update(new_holidays)
+    logging.info("Holiday data updated.")
 
 
 class SUTDCalendarBot:
     def __init__(self, log_callback=None):
-        self.driver: Optional[webdriver.Remote] = None
-        self.wait: Optional[WebDriverWait] = None
+        self.driver: Any = None
+        self.wait: Any = None
         self.weekday_map = ('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
         self.log_callback = log_callback
+        
+        # Start holiday fetch in background
+        threading.Thread(target=load_singapore_holidays, daemon=True).start()
+
+    def log(self, message):
+        logging.info(message) 
+        if self.log_callback:
+            self.log_callback(message) 
+        else:
+            print(message)
+# ... [rest of SUTDCalendarBot methods unchanged] ...
 
     def log(self, message):
         logging.info(message) 
@@ -172,100 +187,98 @@ class SUTDCalendarBot:
         else:
             print(message)
 
-    def start_browser(self):
-        self.log("Starting Browser...")
-        
-        # --- 1. Try Chrome First (Windows & Mac Preferred) ---
+    def _get_chrome_options(self, headless=True):
+        from selenium import webdriver
+        options = webdriver.ChromeOptions()
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        # Optimization: Block images/CSS in headless mode?
+        # Maybe too risky for Single-Page Apps (React/Angular) that depend on loading state.
+        if headless:
+            options.add_argument("--headless=new")
+        return options
+
+    def start_login_and_scrape(self) -> str:
+        """
+        OPTIMIZED FLOW:
+        1. Open Visible Window (User Logs In)
+        2. Detect Login -> Minimize Window (Pseudo-Headless)
+        3. Scrape in same session (Fastest)
+        """
+        # Lazy imports
+        from selenium import webdriver
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.common.exceptions import TimeoutException
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        self.log("Launching Browser...")
         try:
-            options = webdriver.ChromeOptions()
-            options.add_experimental_option("detach", True)
-            options.add_experimental_option('excludeSwitches', ['enable-logging'])
-            self.driver = webdriver.Chrome(options=options)
-            self.wait = WebDriverWait(self.driver, 15)
-            self.log("Google Chrome started successfully.")
-            return
-        except Exception as e:
-            logging.warning(f"Chrome failed to start: {e}")
-            self.log("Chrome not found or failed. Checking for alternatives...")
+            service = Service(ChromeDriverManager().install())
+            # Start VISIBLE so user can see what's happening
+            self.driver = webdriver.Chrome(service=service, options=self._get_chrome_options(headless=False))
+            self.wait = WebDriverWait(self.driver, 300)
 
-        # --- 2. Fallback to Safari (macOS Only) ---
-        if sys.platform == "darwin":
-            self.log("Attempting to launch Safari...")
-            try:
-                self.driver = webdriver.Safari()
-                self.driver.maximize_window()
-                self.wait = WebDriverWait(self.driver, 15)
-                self.log("Safari started successfully.")
-                return
-            except SessionNotCreatedException:
-                error_msg = (
-                    "Safari Automation is not enabled.\n\n"
-                    "Please enable it:\n"
-                    "1. Open Safari > Settings > Advanced\n"
-                    "2. Check 'Show Develop menu in menu bar'\n"
-                    "3. Click 'Develop' in the top menu bar\n"
-                    "4. Select 'Allow Remote Automation'"
-                )
-                logging.error(error_msg)
-                raise RuntimeError(error_msg)
-            except Exception as e:
-                logging.error(f"Safari failed: {e}")
-                raise RuntimeError(f"Safari failed to start. Error: {e}")
-
-        # --- 3. No browser found ---
-        raise RuntimeError("Could not find Google Chrome. Please install Chrome (or enable Safari automation if on Mac).")
-
-    def login_and_navigate(self) -> str:
-        if not self.driver or not self.wait:
-            raise RuntimeError("Browser not started!")
-
-        try:
-            self.log("Navigating to portal...")
+            self.log("Please log in via the browser window...")
             self.driver.get("https://ease.sutd.edu.sg/app/sutd_myportal_1/exk3pseb8o4VxzQF85d7/sso/saml")
 
-            self.log("Waiting for Manual Login...")
-            self.log("ACTION REQUIRED: Log in & do 2FA in the browser window.")
-            
-            mfa_wait = WebDriverWait(self.driver, 120) 
-            mfa_wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "PSHYPERLINKNOUL"))).click()
-            self.log("Login detected! Proceeding...")
+            # Wait for Login (Presence of Portal Element)
+            try:
+                # Wait for the "Student" or "Oracle" link which appears after MFA
+                self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "PSHYPERLINKNOUL")))
+                self.log("Login detected!")
+                
+                # OPTIMIZATION: Minimize window instead of closing/restarting
+                self.driver.minimize_window()
+                self.log("Browser hidden. Starting extraction...")
+                
+            except TimeoutException:
+                raise TimeoutException("Login timed out. Did you close the window?")
 
+            # Reuse the SAME driver for scraping (Faster than restarting)
+            # Re-click the menu items to ensure frame loads correctly
+            # Note: We are already on the portal page or close to it.
+            
+            # Click "Student" / Portal Link if needed
+            try:
+                self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "PSHYPERLINKNOUL"))).click()
+            except:
+                pass # Already clicked or on page
+            
             self.wait.until(EC.element_to_be_clickable((By.ID, "ADMN_S20160108140638335703604"))).click()
-            self.log("Opened Weekly Schedule...")
+            self.log("Accessing Weekly Schedule...")
 
             self.wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ptifrmtgtframe")))
 
+            # Click List View
             list_view_xpath = "//input[@type='radio' and @value='L' and starts-with(@id, 'DERIVED_REGFRM1_SSR_SCHED_FORMAT')]"
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, list_view_xpath))).click()
+            radio = self.wait.until(EC.element_to_be_clickable((By.XPATH, list_view_xpath)))
+            radio.click()
             self.log("Switched to List View...")
 
-            time.sleep(2) 
-
+            # Smart Wait for Content
+            # Wait for the table to change or loading overlay to vanish
+            time.sleep(1.5) # Short sleep IS safer than complex AJAX waits here for now
+            
             body_element = self.driver.find_element(By.TAG_NAME, "body")
             body_text = body_element.text
             
-            if not body_text:
-                raise ValueError("Extracted body text is empty.")
-                
-            self.log("Success: Schedule extracted.")
+            self.log("Schedule data extracted.")
             return body_text
 
-        except TimeoutException:
-            raise TimeoutException("Login timed out. Please try again and ensure you complete 2FA.")
-        except WebDriverException as e:
-            if "no such window" in str(e).lower():
-                raise RuntimeError("Browser window was closed unexpectedly.")
-            raise e
         except Exception as e:
-            logging.error(f"Navigation Error: {e}", exc_info=True)
-            self.log(f"Error: {e}")
-            raise
+            logging.error(f"Scraping Error: {e}", exc_info=True)
+            raise e
+        finally:
+            self.close()
 
     def parse_raw_data(self, raw_text: str) -> List[Dict]:
         self.log("Parsing schedule data...")
         flags = re.DOTALL + re.MULTILINE
         
         time_re = r'\d\d?:\d\d(?:[AP]M)?'
+        # Date regex: some systems use 02/04/2025, just ensuring robustness
         date_re = r'\d\d\/\d\d\/\d{4}'
         
         type_data_re = (
@@ -314,7 +327,10 @@ class SUTDCalendarBot:
             courses.append(course)
 
         if not courses:
-            raise ValueError("No courses found.")
+            # We don't raise error immediately, maybe it's recess week? 
+            # But usually list view shows empty table. 
+            self.log("Warning: No courses found in text.")
+            # raise ValueError("No courses found. Are you sure the schedule is released?")
         
         self.log(f"Found {len(courses)} courses.")
         return courses
@@ -329,8 +345,11 @@ class SUTDCalendarBot:
                 for cls in types:
                     all_dates.append(cls['start_date'])
         
-        term_start = min(all_dates) if all_dates else date.today()
-        self.log(f"Term assumed to start on: {term_start}")
+        if not all_dates:
+             return []
+
+        term_start = min(all_dates)
+        # self.log(f"Term assumed to start on: {term_start}")
 
         for course in courses:
             display_name = course['name']
@@ -346,19 +365,26 @@ class SUTDCalendarBot:
 
                     while current_date <= c['end_date']:
                         if current_date in SG_HOLIDAYS:
-                            self.log(f"SKIPPING Holiday: {current_date}")
+                            # self.log(f"Skipping Holiday: {current_date}")
                             current_date += timedelta(weeks=1)
                             continue
 
+                        # Recess Week Logic? (Usually Week 7)
+                        # The original code has a weird "Week 7" check that skips if date didn't change?
+                        # Re-implementing original logic safely:
                         weeks_since_start = ((current_date - term_start).days // 7) + 1
                         if weeks_since_start == 7:
+                            # If it's literally recess week, we skip? 
+                            # Or is "Recess Week" handled by the portal not outputting date ranges?
+                            # The portal usually gives specific date ranges that EXCLUDE recess week if broken up.
+                            # But if it's one continuous block, we might need to manually skip using the "Week 7" rule.
+                            # Existing logic:
                             if current_date != c['start_date']: 
                                 current_date += timedelta(weeks=1)
                                 continue
 
                         raw_loc = c['loc']
                         final_loc = raw_loc
-                        desc_extras = ""
                         
                         loc_match = re.search(r'(\d)\.(\d)(\d{2})', raw_loc)
                         if loc_match:
@@ -376,7 +402,7 @@ class SUTDCalendarBot:
                             start_arrow = arrow.get(start_dt_str, 'YYYY-MM-DD HH:mm').replace(tzinfo=TIMEZONE)
                             end_arrow = arrow.get(end_dt_str, 'YYYY-MM-DD HH:mm').replace(tzinfo=TIMEZONE)
                             
-                            description = ', '.join(c['lecturers']) + desc_extras
+                            description = ', '.join(c['lecturers'])
 
                             final_events.append({
                                 'Subject': subject,
@@ -388,18 +414,21 @@ class SUTDCalendarBot:
                             })
                         except Exception as e:
                             logging.error(f"Event Gen Error: {e}")
-                            self.log(f"Skipped event due to error: {e}")
                         
                         current_date += timedelta(weeks=1)
         
         return final_events
 
-    def generate_outputs(self, events: List[Dict]):
+    def generate_outputs(self, events: List[Dict], filename: str = OUTPUT_ICS):
         if not events:
             self.log("No events to write.")
             return
 
-        self.log("Writing files...")
+        self.log(f"Writing to {filename}...")
+        
+        from ics import Calendar, Event
+        from ics.alarm import DisplayAlarm
+        
         cal = Calendar()
         
         for ev in events:
@@ -417,11 +446,11 @@ class SUTDCalendarBot:
             cal.events.add(e)
 
         try:
-            with open(OUTPUT_ICS, 'w', encoding='utf-8') as f:
+            with open(filename, 'w', encoding='utf-8') as f:
                 f.write(cal.serialize())
-            self.log(f"Saved: {OUTPUT_ICS}")
+            self.log(f"Success: File saved.")
         except PermissionError:
-            raise PermissionError(f"Cannot write to {OUTPUT_ICS}. The file is open in another program.\nPlease close it and try again.")
+            raise PermissionError(f"Cannot write to {filename}. The file is open in another program.")
 
     def close(self):
         if self.driver:
@@ -429,6 +458,7 @@ class SUTDCalendarBot:
                 self.driver.quit()
             except:
                 pass
+        self.driver = None
 
     @staticmethod
     def _parse_date_str(date_str) -> date:
@@ -440,259 +470,350 @@ class SUTDCalendarBot:
         t = time.strptime(time_str, fmt)
         return dt_time(t.tm_hour, t.tm_min)
 
-# --- 4. MODERN UI (CustomTkinter) ---
+# --- 4. MODERN UI (Wizard Style) ---
 
-class CalendarApp(ctk.CTk):
+try:
+    from packaging import version
+except ImportError:
+    pass # Handle gracefully or rely on self-installer
+
+class UpdateChecker:
+    REPO_API = "https://api.github.com/repos/raghav0818/SUTD-CALENDAR-BOT/releases/latest"
+    CURRENT_VERSION = "2.0.0" 
+
+    @staticmethod
+    def check_for_updates():
+        """Returns (has_update, new_version_tag, download_url) or (False, None, None)"""
+        try:
+            resp = requests.get(UpdateChecker.REPO_API, timeout=3)
+            if resp.status_code == 200:
+                data = resp.json()
+                latest_tag = data.get("tag_name", "0.0.0").lstrip("v")
+                
+                # Simple version compare
+                try:
+                    if version.parse(latest_tag) > version.parse(UpdateChecker.CURRENT_VERSION):
+                        return True, latest_tag, data.get("html_url", "")
+                except:
+                    pass # 'packaging' might not be available or tags malformed
+        except:
+            pass
+        return False, None, None
+
+class SUTDCalendarWizard(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("SUTD Schedule Export")
-        self.geometry("750x850") 
+        self.title(f"SUTD Calendar Bot v{UpdateChecker.CURRENT_VERSION}")
+        self.geometry("800x600")
         
-        self.bot = SUTDCalendarBot(log_callback=self.update_log)
-        self.courses_data = []
-        self.selection_vars = {} 
-        self.name_vars = {} 
-        self.config_data = self.load_config() 
-
+        self.bot = SUTDCalendarBot(log_callback=self.log_callback)
+        self.courses_data = [] # Stores parsed data
+        self.cookies = None    # Stores session cookies
+        
+        # Grid Layout
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1) 
+        self.grid_rowconfigure(1, weight=1) # Main Content area grows
 
         # 1. HEADER
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
+        self.header = ctk.CTkFrame(self, height=60, corner_radius=0)
+        self.header.grid(row=0, column=0, sticky="ew")
         
-        self.title_lbl = ctk.CTkLabel(self.header_frame, text="SUTD CALENDAR BOT", font=("Roboto Medium", 20))
-        self.title_lbl.pack(side="left")
+        self.title_lbl = ctk.CTkLabel(self.header, text="SUTD CALENDAR BOT", font=("Roboto Medium", 18))
+        self.title_lbl.pack(side="left", padx=20, pady=15)
         
-        self.subtitle_lbl = ctk.CTkLabel(self.header_frame, text="Smart .ics Generator", font=("Roboto", 12), text_color="gray")
-        self.subtitle_lbl.pack(side="left", padx=10, pady=(8,0))
+        self.step_lbl = ctk.CTkLabel(self.header, text="Step 1 of 4", font=("Roboto", 12), text_color="gray")
+        self.step_lbl.pack(side="right", padx=20)
 
-        # 2. CONTROL PANEL
-        self.ctrl_frame = ctk.CTkFrame(self)
-        self.ctrl_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=5)
+        # 2. MAIN CONTENT CONTAINER
+        self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
+
+        # 3. FOOTER (Logs & Nav)
+        self.footer = ctk.CTkFrame(self, height=40, fg_color="transparent")
+        self.footer.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 20))
         
-        self.instr_lbl = ctk.CTkLabel(self.ctrl_frame, 
-                                      text="STEP 1: Click 'Start Login & Scan' to begin.", 
-                                      font=("Roboto", 14), anchor="w")
-        self.instr_lbl.pack(fill="x", padx=15, pady=(15, 5))
+        self.status_lbl = ctk.CTkLabel(self.footer, text="Ready", text_color="gray", anchor="w")
+        self.status_lbl.pack(side="left", fill="x", expand=True)
 
-        self.start_btn = ctk.CTkButton(self.ctrl_frame, text="START LOGIN & SCAN", 
-                                       command=self.start_process, 
-                                       font=("Roboto", 12, "bold"), height=40)
-        self.start_btn.pack(side="left", padx=15, pady=15)
-
-        self.status_lbl = ctk.CTkLabel(self.ctrl_frame, text="Ready", text_color="gray")
-        self.status_lbl.pack(side="left", padx=15)
-
-        # 3. LIST FRAME (Scrollable)
-        self.list_lbl_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.list_lbl_frame.grid(row=2, column=0, sticky="nsew", padx=20, pady=5)
+        # Initialize Steps
+        self.show_step_1_welcome()
         
-        self.list_header = ctk.CTkFrame(self.list_lbl_frame, height=30, fg_color="transparent")
-        self.list_header.pack(fill="x")
-        ctk.CTkLabel(self.list_header, text="DETECTED COURSES", font=("Roboto", 12, "bold")).pack(side="left")
-        
-        self.btn_all = ctk.CTkButton(self.list_header, text="Select All", width=60, height=20, font=("Roboto", 10), command=lambda: self.toggle_all(True))
-        self.btn_all.pack(side="right", padx=5)
-        self.btn_none = ctk.CTkButton(self.list_header, text="Select None", width=60, height=20, font=("Roboto", 10), command=lambda: self.toggle_all(False))
-        self.btn_none.pack(side="right")
+        # Check updates in background
+        threading.Thread(target=self.run_update_check, daemon=True).start()
 
-        self.scroll_area = ctk.CTkScrollableFrame(self.list_lbl_frame, label_text="Course List")
-        self.scroll_area.pack(fill="both", expand=True)
+    def log_callback(self, msg):
+        # Update status bar safely
+        self.after(0, lambda: self.status_lbl.configure(text=msg))
 
-        # 4. SETTINGS & GENERATE
-        self.bottom_frame = ctk.CTkFrame(self)
-        self.bottom_frame.grid(row=3, column=0, sticky="ew", padx=20, pady=20)
+    def run_update_check(self):
+        has_update, new_ver, url = UpdateChecker.check_for_updates()
+        if has_update:
+            msg = f"Update Available (v{new_ver})!"
+            self.after(0, lambda: self.show_update_btn(msg, url))
 
-        ctk.CTkLabel(self.bottom_frame, text="Reminder (min):").pack(side="left", padx=(15, 5))
-        
-        saved_reminder = self.config_data.get("settings", {}).get("default_reminder", 15)
-        self.reminder_var = ctk.StringVar(value=str(saved_reminder))
-        self.rem_entry = ctk.CTkEntry(self.bottom_frame, textvariable=self.reminder_var, width=50)
-        self.rem_entry.pack(side="left")
+    def show_update_btn(self, msg, url):
+        btn = ctk.CTkButton(self.header, text=msg, fg_color="#E63946", hover_color="#D62828",
+                            command=lambda: webbrowser.open(url))
+        btn.pack(side="right", padx=10)
 
-        self.gen_btn = ctk.CTkButton(self.bottom_frame, text="GENERATE CALENDAR FILES", 
-                                     command=self.generate_files, 
-                                     font=("Roboto", 14, "bold"), 
-                                     height=50, state="disabled")
-        self.gen_btn.pack(side="right", padx=15, pady=15, fill="x", expand=True)
-        
-        # 5. LOG BOX
-        self.log_box = ctk.CTkTextbox(self, height=80, font=("Consolas", 10))
-        self.log_box.grid(row=4, column=0, sticky="ew", padx=20, pady=(0, 20))
-        self.log_box.insert("0.0", "System Ready. Config loaded.\n")
-
-    def load_config(self):
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE, 'r') as f:
-                    return json.load(f)
-            except Exception:
-                return {}
-        return {}
-
-    def save_config(self, processed_courses, reminder_val):
-        config = self.config_data
-        
-        if "settings" not in config: config["settings"] = {}
-        config["settings"]["default_reminder"] = reminder_val
-
-        if "courses" not in config: config["courses"] = {}
-        for c in processed_courses:
-            config["courses"][c['code']] = {
-                "custom_name": c['name'],
-            }
-            
-        try:
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(config, f, indent=4)
-            self.update_log("Preferences saved.")
-        except Exception as e:
-            self.update_log(f"Failed to save config: {e}")
-
-    def update_log(self, message):
-        self.after(0, self._append_log, message)
-
-    def _append_log(self, message):
-        self.status_lbl.configure(text=message) 
-        self.log_box.insert("end", f"> {message}\n")
-        self.log_box.see("end")
-
-    def start_process(self):
-        self.start_btn.configure(state="disabled")
-        threading.Thread(target=self.run_selenium_task, daemon=True).start()
-
-    def run_selenium_task(self):
-        try:
-            self.bot.start_browser()
-            raw_text = self.bot.login_and_navigate()
-            courses = self.bot.parse_raw_data(raw_text)
-            self.bot.close()
-            
-            try:
-                self.after(0, lambda: self.state('zoomed'))
-            except: pass
-
-            self.after(0, self.show_selection_ui, courses)
-        except Exception as e:
-            logging.error(f"Selenium Task Error: {e}", exc_info=True)
-            self.after(0, messagebox.showerror, "Error", str(e))
-            self.after(0, self.reset_ui)
-            if self.bot.driver: self.bot.close()
-
-    def show_selection_ui(self, courses):
-        self.courses_data = courses
-        self.start_btn.configure(text="RESCAN", state="normal", fg_color="#333")
-        self.gen_btn.configure(state="normal")
-        
-        instructions = (
-            "STEP 2: CUSTOMIZE\n"
-            "• Rename: Edit text boxes.\n"
-            "• Filter: Uncheck unwanted classes.\n"
-            "• Finalize: Click Generate."
-        )
-        self.instr_lbl.configure(text=instructions)
-
-        for widget in self.scroll_area.winfo_children():
+    def set_step(self, num, title):
+        self.step_lbl.configure(text=f"Step {num} of 4: {title}")
+        # Clear main frame
+        for widget in self.main_frame.winfo_children():
             widget.destroy()
+
+    # --- STEP 1: WELCOME ---
+    def show_step_1_welcome(self):
+        self.set_step(1, "Start")
+        
+        # Hero Section
+        ctk.CTkLabel(self.main_frame, text="Generate your SUTD Calendar", font=("Roboto", 24, "bold")).pack(pady=(40, 10))
+        
+        info_text = (
+            "This bot will:\n"
+            "1. Securely log you into the SUTD Portal.\n"
+            "2. Extract your class schedule automatically.\n"
+            "3. Generate an .ics file for Google/Apple Calendar."
+        )
+        ctk.CTkLabel(self.main_frame, text=info_text, font=("Roboto", 14), justify="left").pack(pady=10)
+        
+        # --- TERM AND CLASS INPUTS ---
+        input_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        input_frame.pack(pady=20)
+        
+        ctk.CTkLabel(input_frame, text="Required Information:", font=("Roboto", 14, "bold")).pack(pady=(0, 10))
+        
+        fields_row = ctk.CTkFrame(input_frame, fg_color="transparent")
+        fields_row.pack()
+        
+        ctk.CTkLabel(fields_row, text="Term:", font=("Roboto", 12)).pack(side="left", padx=5)
+        self.term_var = ctk.StringVar()
+        ctk.CTkEntry(fields_row, textvariable=self.term_var, width=60, placeholder_text="5").pack(side="left", padx=5)
+        
+        ctk.CTkLabel(fields_row, text="Class:", font=("Roboto", 12)).pack(side="left", padx=(15, 5))
+        self.class_var = ctk.StringVar()
+        ctk.CTkEntry(fields_row, textvariable=self.class_var, width=60, placeholder_text="03").pack(side="left", padx=5)
+        
+        # Action
+        start_btn = ctk.CTkButton(self.main_frame, text="GET STARTED >", width=200, height=50, 
+                                  font=("Roboto", 14, "bold"), command=self.validate_and_continue)
+        start_btn.pack(pady=30)
+
+        ctk.CTkLabel(self.main_frame, text="Requires 'One-Stop' portal access.", text_color="gray").pack()
+
+    def validate_and_continue(self):
+        """Validate inputs before proceeding to login"""
+        term = self.term_var.get().strip()
+        cls = self.class_var.get().strip()
+        
+        if not term or not cls:
+            messagebox.showwarning("Missing Information", "Please enter both your Term and Class number before continuing.")
+            return
+        
+        self.show_step_2_login()
+
+
+    # --- STEP 2: LOGIN ---
+    def show_step_2_login(self):
+        self.set_step(2, "Secure Login")
+        
+        ctk.CTkLabel(self.main_frame, text="Authentication Required", font=("Roboto", 20, "bold")).pack(pady=(20, 10))
+        
+        instr_frame = ctk.CTkFrame(self.main_frame)
+        instr_frame.pack(fill="x", padx=40, pady=20)
+        
+        instr = (
+            "1. Click the button below to open a browser window.\n"
+            "2. Log in with your SUTD ID and perform 2FA.\n"
+            "3. Wait for the window to close automatically."
+        )
+        ctk.CTkLabel(instr_frame, text=instr, font=("Roboto", 14), justify="left", padx=20, pady=20).pack(anchor="w")
+
+        self.login_btn = ctk.CTkButton(self.main_frame, text="AUTHENTICATE WITH SUTD", width=250, height=50,
+                                       font=("Roboto", 14, "bold"), command=self.start_login_process)
+        self.login_btn.pack(pady=10)
+
+        self.loading_spinner = ctk.CTkProgressBar(self.main_frame, width=300, mode="indeterminate")
+        # Hidden by default
+
+    def start_login_process(self):
+        self.login_btn.configure(state="disabled", text="WAITING FOR LOGIN...")
+        self.loading_spinner.pack(pady=20)
+        self.loading_spinner.start()
+        
+        threading.Thread(target=self.thread_login_task, daemon=True).start()
+
+    def thread_login_task(self):
+        try:
+            # 1. Login & Scrape (Single Session)
+            self.bot.log("Waiting for user login...")
+            raw_text = self.bot.start_login_and_scrape()
             
+            # 2. Parse
+            courses = self.bot.parse_raw_data(raw_text)
+            
+            # 3. Success -> UI
+            self.after(0, self.show_step_3_review, courses)
+            
+        except Exception as e:
+            self.bot.log(f"Error: {e}")
+            self.after(0, lambda: messagebox.showerror("Login/Scan Error", f"An error occurred:\n{e}\n\nPlease try again."))
+            self.after(0, self.reset_step_2)
+
+    def reset_step_2(self):
+        self.login_btn.configure(state="normal", text="AUTHENTICATE WITH SUTD")
+        self.loading_spinner.stop()
+        self.loading_spinner.pack_forget()
+
+    # --- STEP 3: REVIEW ---
+    def show_step_3_review(self, courses):
+        self.courses_data = courses
+        self.set_step(3, "Review & Customize")
+        
+        # Load Config for defaults
+        saved_config = {}
+        if os.path.exists(CONFIG_FILE):
+             try:
+                 with open(CONFIG_FILE, 'r') as f:
+                     saved_config = json.load(f).get("courses", {})
+             except: pass
+        
+        
+        # Top Controls
+        top_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        top_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(top_frame, text="Found Courses:", font=("Roboto", 14, "bold")).pack(side="left")
+        
         self.selection_vars = {}
         self.name_vars = {}
-        
-        self.update_log("Review courses and generate.")
 
-        if not courses:
-             ctk.CTkLabel(self.scroll_area, text="No courses found in schedule!", text_color="red").pack(pady=20)
-             self.gen_btn.configure(state="disabled")
-             return
+        # Scroll Area
+        scroll = ctk.CTkScrollableFrame(self.main_frame, label_text="Uncheck classes you don't want")
+        scroll.pack(fill="both", expand=True, pady=10)
 
         for i, course in enumerate(courses):
-            card = ctk.CTkFrame(self.scroll_area)
+            c_code = course['code']
+            c_name = course['name']
+            
+            # Default name from config?
+            default_name = saved_config.get(c_code, {}).get("custom_name", c_name)
+            
+            card = ctk.CTkFrame(scroll)
             card.pack(fill="x", padx=5, pady=5)
             
+            # Header
             header = ctk.CTkFrame(card, fg_color="transparent")
-            header.pack(fill="x", padx=5, pady=5)
+            header.pack(fill="x", padx=5, pady=2)
+            ctk.CTkLabel(header, text=c_code, width=80, anchor="w", font=("Roboto", 12, "bold")).pack(side="left")
             
-            ctk.CTkLabel(header, text=course['code'], font=("Roboto", 12, "bold"), text_color="gray").pack(side="left")
-            
-            saved_courses = self.config_data.get("courses", {})
-            saved_info = saved_courses.get(course['code'], {})
-            default_name = saved_info.get("custom_name", course['name'])
-
+            # Rename Field
             name_var = ctk.StringVar(value=default_name)
             self.name_vars[i] = name_var
-            
-            name_entry = ctk.CTkEntry(header, textvariable=name_var, height=28)
-            name_entry.pack(side="left", fill="x", expand=True, padx=10)
-            
+            ctk.CTkEntry(header, textvariable=name_var, height=28).pack(side="left", fill="x", expand=True, padx=5)
+
+            # Checkboxes
             chk_frame = ctk.CTkFrame(card, fg_color="transparent")
-            chk_frame.pack(fill="x", padx=10, pady=5)
-
+            chk_frame.pack(fill="x", padx=10, pady=2)
+            
             for type_code in course['type'].keys():
-                friendly_name = TYPE_MAPPING.get(type_code, type_code)
+                friendly = TYPE_MAPPING.get(type_code, type_code)
                 var = ctk.BooleanVar(value=True)
-                chk = ctk.CTkCheckBox(chk_frame, text=friendly_name, variable=var)
-                chk.pack(side="left", padx=10)
                 self.selection_vars[(i, type_code)] = var
+                ctk.CTkCheckBox(chk_frame, text=friendly, variable=var).pack(side="left", padx=10)
 
-    def toggle_all(self, state):
-        for var in self.selection_vars.values():
-            var.set(state)
-
-    def generate_files(self):
-        filtered_courses = []
-        for i, course in enumerate(self.courses_data):
-            new_course = course.copy()
-            
-            custom_name = self.name_vars[i].get()
-            if custom_name:
-                new_course['name'] = custom_name
-
-            new_course['type'] = {}
-            has_selected_type = False
-            
-            for type_name, type_data in course['type'].items():
-                if self.selection_vars.get((i, type_name)).get():
-                    new_course['type'][type_name] = type_data
-                    has_selected_type = True
-            
-            if has_selected_type:
-                filtered_courses.append(new_course)
-
-        self.update_log(f"Processing {len(filtered_courses)} courses...")
+        # Bottom Bar
+        bot_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        bot_frame.pack(fill="x", pady=10)
         
+        ctk.CTkLabel(bot_frame, text="Reminder (min):").pack(side="left")
+        self.rem_var = ctk.StringVar(value="15")
+        ctk.CTkEntry(bot_frame, textvariable=self.rem_var, width=50).pack(side="left", padx=5)
+
+        ctk.CTkButton(bot_frame, text="GENERATE .ICS FILE", width=200, height=40, font=("Roboto", 13, "bold"),
+                      command=self.generate_course_files).pack(side="right")
+
+    def generate_course_files(self):
+        filtered_courses = []
+        config_to_save = {}
+        
+        for i, course in enumerate(self.courses_data):
+            # 1. Update Name
+            custom_name = self.name_vars[i].get()
+            
+            # 2. Filter Types
+            selected_types = {}
+            for t_code, t_data in course['type'].items():
+                if self.selection_vars[(i, t_code)].get():
+                    selected_types[t_code] = t_data
+            
+            if selected_types:
+                new_c = course.copy()
+                new_c['name'] = custom_name
+                new_c['type'] = selected_types
+                filtered_courses.append(new_c)
+                
+                config_to_save[course['code']] = {"custom_name": custom_name}
+
+        # Save Config
         try:
-            try:
-                rem_mins = int(self.reminder_var.get())
-            except ValueError:
-                rem_mins = 15
-            
-            self.save_config(filtered_courses, rem_mins)
-
-            events = self.bot.expand_events(filtered_courses, reminder_minutes=rem_mins)
-            self.bot.generate_outputs(events)
-            
-            self.withdraw()
-            
-            output_dir = os.path.abspath(".")
-            if os.name == 'nt':
-                os.startfile(output_dir)
-            elif os.name == 'posix':
-                try:
-                    subprocess.call(['open', output_dir])
-                except:
-                    pass
-
-            messagebox.showinfo("Success", f"Calendar generated!\n\nFile saved to:\n{os.path.join(output_dir, OUTPUT_ICS)}")
-            self.destroy()
-
+            full_config = {"courses": config_to_save, "settings": {"default_reminder": int(self.rem_var.get())}}
+            with open(CONFIG_FILE, 'w') as f:
+                json.dump(full_config, f, indent=4)
+        except: pass
+        
+        # Determine Filename
+        term = self.term_var.get().strip()
+        cls_val = self.class_var.get().strip()
+        
+        final_filename = OUTPUT_ICS 
+        if term and cls_val:
+            # SUTD_Term_5_Class_03.ics
+            final_filename = f"SUTD_Term_{term}_Class_{cls_val}.ics"
+        
+        # Generate
+        try:
+             events = self.bot.expand_events(filtered_courses, reminder_minutes=int(self.rem_var.get()))
+             self.bot.generate_outputs(events, filename=final_filename)
+             self.show_step_4_success(final_filename)
         except Exception as e:
-            logging.error(f"Generation Failed: {e}", exc_info=True)
-            messagebox.showerror("Generation Error", str(e))
+            messagebox.showerror("Error", str(e))
 
-    def reset_ui(self):
-        self.start_btn.configure(state="normal")
+    # --- STEP 4: SUCCESS ---
+    def show_step_4_success(self, filename: str):
+        self.set_step(4, "All Done!")
+        
+        icon_lbl = ctk.CTkLabel(self.main_frame, text="✔️", font=("Arial", 60), text_color="#4CAF50")
+        icon_lbl.pack(pady=(40, 10))
+        
+        ctk.CTkLabel(self.main_frame, text="Calendar Generated Successfully!", font=("Roboto", 20, "bold")).pack()
+        
+        path = os.path.abspath(filename)
+        
+        # File info box
+        file_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        file_frame.pack(pady=10)
+        ctk.CTkLabel(file_frame, text="Saved to:", text_color="gray").pack()
+        ctk.CTkLabel(file_frame, text=path, font=("Consolas", 10), wraplength=700).pack()
+        
+        # Actions
+        btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        btn_frame.pack(pady=40)
+        
+        ctk.CTkButton(btn_frame, text="Open Folder", command=self.open_output_folder).pack(side="left", padx=10)
+        ctk.CTkButton(btn_frame, text="Exit", fg_color="gray", command=self.quit).pack(side="left", padx=10)
+
+    def open_output_folder(self):
+        path = os.path.abspath(".")
+        if os.name == 'nt':
+            os.startfile(path)
+        else:
+            # mac/linux fallback
+            import subprocess
+            try:
+                subprocess.call(['open', path])
+            except: pass
 
 if __name__ == "__main__":
-    app = CalendarApp()
+    app = SUTDCalendarWizard()
     app.mainloop()

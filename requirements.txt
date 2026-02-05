@@ -1,6 +1,0 @@
-urllib3==1.26.18
-selenium>=4.0.0
-customtkinter>=5.2.0
-ics>=0.7
-arrow
-requests>=2.31.0
