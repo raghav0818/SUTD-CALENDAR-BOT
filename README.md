@@ -2,24 +2,28 @@
 
 Automated schedule generator for SUTD students.
 
-![Bot Demo](https://github.com/user-attachments/assets/9ec3695e-0d96-417b-926b-889db24203f9)
+<img width="1280" height="720" alt="sutdcalendarbot-ezgif com-optimize" src="https://github.com/user-attachments/assets/67a01a4a-429d-4b50-ae1e-01352976c7be" />
 
+🚀 How to Run
 
-## 🚀 How to Run
+The easiest way to use the bot is to run the script directly from your favorite code editor!
 
-### Windows
-1. Download `sutd_calendar_bot.exe` from Releases.
-2. Double-click to run.
+Prerequisites: Make sure you have Python installed on your computer.
 
-### macOS / Linux
-Open Terminal and run:
-```bash
-python3 sutd_calendar_bot.py
-```
+Download: Download or clone this repository to your computer.
 
-> **Note:** On the first run, it will automatically install all required libraries (selenium, etc.) for you.
+Open: Open the sutd_bot.py file in a code editor like Visual Studio Code, PyCharm, or IDLE.
 
-## ✨ Features
-1. **Inputs First:** Enter Term & Class (e.g., Term 5, Class 03).
-2. **Secure Login:** Opens a browser for you to log in, then automates the rest.
-3. **Smart:** Skips holidays and recess weeks automatically.
+Run: Click the "Run" button in your editor!
+
+Note: On the very first run, the script features a built-in self-installer that will automatically detect and download all required libraries (like selenium, customtkinter, and ics) for you!
+
+✨ Features
+
+Visual Grid Scraping: Automatically navigates your SUTD Weekly Calendar View week-by-week to capture accurate dates and skip recess weeks seamlessly.
+
+Interactive Conflict Resolution: If two classes overlap (e.g., an orange "Time Conflict" block), a smart pop-up lets you easily choose which class to keep on your schedule.
+
+Customizable: Review your extracted schedule, rename course titles, and filter out unwanted class types (like skipping lectures) before finalizing.
+
+Dual Export: Instantly generates both a .csv spreadsheet and an .ics calendar file (compatible with Google Calendar and Apple Calendar) directly to your Desktop.
