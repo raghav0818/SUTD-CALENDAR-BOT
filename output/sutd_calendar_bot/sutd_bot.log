@@ -1,0 +1,138 @@
+2026-05-07 20:49:21 - INFO - Starting Browser...
+2026-05-07 20:49:22 - INFO - Google Chrome started successfully.
+2026-05-07 20:49:22 - INFO - Navigating to portal...
+2026-05-07 20:49:23 - INFO - Waiting for Manual Login...
+2026-05-07 20:49:23 - INFO - ACTION REQUIRED: Log in & do 2FA in the browser window.
+2026-05-07 20:49:24 - ERROR - Navigation Error: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.96); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6cd57d6d5+14ef5]
+	chromedriver!GetHandleVerifier [0x7ff6cd57d740+14f60]
+	chromedriver!(No symbol) [0x7ff6cd2cd59d]
+	chromedriver!(No symbol) [0x7ff6cd2b8a82]
+	chromedriver!(No symbol) [0x7ff6cd2dee16]
+	chromedriver!(No symbol) [0x7ff6cd356e70]
+	chromedriver!(No symbol) [0x7ff6cd373e02]
+	chromedriver!(No symbol) [0x7ff6cd319608]
+	chromedriver!(No symbol) [0x7ff6cd31a4f3]
+	chromedriver!GetHandleVerifier [0x7ff6cd87b779+312f99]
+	chromedriver!GetHandleVerifier [0x7ff6cd875c8b+30d4ab]
+	chromedriver!GetHandleVerifier [0x7ff6cd899012+330832]
+	chromedriver!GetHandleVerifier [0x7ff6cd59a485+31ca5]
+	chromedriver!GetHandleVerifier [0x7ff6cd5a2e7c+3a69c]
+	chromedriver!GetHandleVerifier [0x7ff6cd586a74+1e294]
+	chromedriver!GetHandleVerifier [0x7ff6cd586c04+1e424]
+	chromedriver!GetHandleVerifier [0x7ff6cd56b327+2b47]
+	KERNEL32!BaseThreadInitThunk [0x7ff8a239e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ff8a330c3fc+2c]
+Traceback (most recent call last):
+  File "sutd_calendar_bot.py", line 191, in login_and_prepare_grid
+  File "selenium\webdriver\support\wait.py", line 129, in until
+  File "selenium\webdriver\support\expected_conditions.py", line 624, in _predicate
+  File "selenium\webdriver\remote\webdriver.py", line 926, in find_element
+  File "selenium\webdriver\remote\webdriver.py", line 458, in execute
+  File "selenium\webdriver\remote\errorhandler.py", line 233, in check_response
+selenium.common.exceptions.InvalidSessionIdException: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.96); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6cd57d6d5+14ef5]
+	chromedriver!GetHandleVerifier [0x7ff6cd57d740+14f60]
+	chromedriver!(No symbol) [0x7ff6cd2cd59d]
+	chromedriver!(No symbol) [0x7ff6cd2b8a82]
+	chromedriver!(No symbol) [0x7ff6cd2dee16]
+	chromedriver!(No symbol) [0x7ff6cd356e70]
+	chromedriver!(No symbol) [0x7ff6cd373e02]
+	chromedriver!(No symbol) [0x7ff6cd319608]
+	chromedriver!(No symbol) [0x7ff6cd31a4f3]
+	chromedriver!GetHandleVerifier [0x7ff6cd87b779+312f99]
+	chromedriver!GetHandleVerifier [0x7ff6cd875c8b+30d4ab]
+	chromedriver!GetHandleVerifier [0x7ff6cd899012+330832]
+	chromedriver!GetHandleVerifier [0x7ff6cd59a485+31ca5]
+	chromedriver!GetHandleVerifier [0x7ff6cd5a2e7c+3a69c]
+	chromedriver!GetHandleVerifier [0x7ff6cd586a74+1e294]
+	chromedriver!GetHandleVerifier [0x7ff6cd586c04+1e424]
+	chromedriver!GetHandleVerifier [0x7ff6cd56b327+2b47]
+	KERNEL32!BaseThreadInitThunk [0x7ff8a239e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ff8a330c3fc+2c]
+
+2026-05-07 20:49:24 - INFO - Error preparing grid: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.96); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6cd57d6d5+14ef5]
+	chromedriver!GetHandleVerifier [0x7ff6cd57d740+14f60]
+	chromedriver!(No symbol) [0x7ff6cd2cd59d]
+	chromedriver!(No symbol) [0x7ff6cd2b8a82]
+	chromedriver!(No symbol) [0x7ff6cd2dee16]
+	chromedriver!(No symbol) [0x7ff6cd356e70]
+	chromedriver!(No symbol) [0x7ff6cd373e02]
+	chromedriver!(No symbol) [0x7ff6cd319608]
+	chromedriver!(No symbol) [0x7ff6cd31a4f3]
+	chromedriver!GetHandleVerifier [0x7ff6cd87b779+312f99]
+	chromedriver!GetHandleVerifier [0x7ff6cd875c8b+30d4ab]
+	chromedriver!GetHandleVerifier [0x7ff6cd899012+330832]
+	chromedriver!GetHandleVerifier [0x7ff6cd59a485+31ca5]
+	chromedriver!GetHandleVerifier [0x7ff6cd5a2e7c+3a69c]
+	chromedriver!GetHandleVerifier [0x7ff6cd586a74+1e294]
+	chromedriver!GetHandleVerifier [0x7ff6cd586c04+1e424]
+	chromedriver!GetHandleVerifier [0x7ff6cd56b327+2b47]
+	KERNEL32!BaseThreadInitThunk [0x7ff8a239e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ff8a330c3fc+2c]
+
+2026-05-07 20:49:24 - ERROR - Selenium Task Error: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.96); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6cd57d6d5+14ef5]
+	chromedriver!GetHandleVerifier [0x7ff6cd57d740+14f60]
+	chromedriver!(No symbol) [0x7ff6cd2cd59d]
+	chromedriver!(No symbol) [0x7ff6cd2b8a82]
+	chromedriver!(No symbol) [0x7ff6cd2dee16]
+	chromedriver!(No symbol) [0x7ff6cd356e70]
+	chromedriver!(No symbol) [0x7ff6cd373e02]
+	chromedriver!(No symbol) [0x7ff6cd319608]
+	chromedriver!(No symbol) [0x7ff6cd31a4f3]
+	chromedriver!GetHandleVerifier [0x7ff6cd87b779+312f99]
+	chromedriver!GetHandleVerifier [0x7ff6cd875c8b+30d4ab]
+	chromedriver!GetHandleVerifier [0x7ff6cd899012+330832]
+	chromedriver!GetHandleVerifier [0x7ff6cd59a485+31ca5]
+	chromedriver!GetHandleVerifier [0x7ff6cd5a2e7c+3a69c]
+	chromedriver!GetHandleVerifier [0x7ff6cd586a74+1e294]
+	chromedriver!GetHandleVerifier [0x7ff6cd586c04+1e424]
+	chromedriver!GetHandleVerifier [0x7ff6cd56b327+2b47]
+	KERNEL32!BaseThreadInitThunk [0x7ff8a239e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ff8a330c3fc+2c]
+Traceback (most recent call last):
+  File "sutd_calendar_bot.py", line 642, in run_selenium_task
+  File "sutd_calendar_bot.py", line 191, in login_and_prepare_grid
+  File "selenium\webdriver\support\wait.py", line 129, in until
+  File "selenium\webdriver\support\expected_conditions.py", line 624, in _predicate
+  File "selenium\webdriver\remote\webdriver.py", line 926, in find_element
+  File "selenium\webdriver\remote\webdriver.py", line 458, in execute
+  File "selenium\webdriver\remote\errorhandler.py", line 233, in check_response
+selenium.common.exceptions.InvalidSessionIdException: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=148.0.7778.96); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6cd57d6d5+14ef5]
+	chromedriver!GetHandleVerifier [0x7ff6cd57d740+14f60]
+	chromedriver!(No symbol) [0x7ff6cd2cd59d]
+	chromedriver!(No symbol) [0x7ff6cd2b8a82]
+	chromedriver!(No symbol) [0x7ff6cd2dee16]
+	chromedriver!(No symbol) [0x7ff6cd356e70]
+	chromedriver!(No symbol) [0x7ff6cd373e02]
+	chromedriver!(No symbol) [0x7ff6cd319608]
+	chromedriver!(No symbol) [0x7ff6cd31a4f3]
+	chromedriver!GetHandleVerifier [0x7ff6cd87b779+312f99]
+	chromedriver!GetHandleVerifier [0x7ff6cd875c8b+30d4ab]
+	chromedriver!GetHandleVerifier [0x7ff6cd899012+330832]
+	chromedriver!GetHandleVerifier [0x7ff6cd59a485+31ca5]
+	chromedriver!GetHandleVerifier [0x7ff6cd5a2e7c+3a69c]
+	chromedriver!GetHandleVerifier [0x7ff6cd586a74+1e294]
+	chromedriver!GetHandleVerifier [0x7ff6cd586c04+1e424]
+	chromedriver!GetHandleVerifier [0x7ff6cd56b327+2b47]
+	KERNEL32!BaseThreadInitThunk [0x7ff8a239e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ff8a330c3fc+2c]
+
