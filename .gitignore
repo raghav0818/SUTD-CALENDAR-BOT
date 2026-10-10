@@ -1,0 +1,26 @@
+# --- Build output (regenerated; never commit) ---
+build/
+dist/
+*.spec
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# --- Editor ---
+.vscode/
+.idea/
+
+# --- PRIVACY: your personal data. Never commit these. ---
+# error traces
+sutd_bot.log
+# your custom class names & reminder settings
+sutd_bot_config.json
+# your generated calendar + spreadsheet
+SUTD_Calendar.ics
+SUTD_Schedule.csv
+# any saved portal page used for testing
+schedule-sample.html

@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SUTD Calendar Bot - parser tests</title>
+<style>
+  body { font: 14px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif; margin: 32px; max-width: 900px; }
+  h1 { font-size: 19px; }
+  .r { padding: 5px 10px; border-left: 3px solid #ccc; margin: 3px 0; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+  .pass { border-color: #0a7d4f; background: #f2fbf6; }
+  .fail { border-color: #c8102e; background: #fdeaed; color: #8d0a20; }
+  .skip { border-color: #d0a000; background: #fffaef; color: #7a5c00; }
+  #sum { font-weight: 700; font-size: 15px; margin: 18px 0; padding: 11px 14px; border-radius: 8px; }
+  .ok { background: #0a7d4f; color: #fff; }
+  .bad { background: #c8102e; color: #fff; }
+  /* The grid fixture must lay out for real - the day matching is geometric. */
+  #fixture table { border-collapse: collapse; table-layout: fixed; width: 700px; }
+  #fixture th, #fixture td { border: 1px solid #ddd; width: 100px; vertical-align: top; font-size: 11px; }
+  #fixture { position: absolute; left: -9999px; top: 0; }
+</style>
+</head>
+<body>
+<h1>SUTD Calendar Bot - parser tests</h1>
+<p>Open this file in a browser. It must run in a real browser, not jsdom: the day-column
+matching uses <code>getBoundingClientRect()</code>, which returns zeros without layout.</p>
+<div id="sum">running...</div>
+<div id="out"></div>
+
+<div id="fixture"></div>
+
+<script src="extension/content.js"></script>
+<script>
+const out = document.getElementById("out");
+let pass = 0, fail = 0, skip = 0;
+
+function check(name, fn) {
+  try {
+    fn();
+    pass++;
+    out.insertAdjacentHTML("beforeend", '<div class="r pass">PASS  ' + name + "</div>");
+  } catch (e) {
+    fail++;
+    out.insertAdjacentHTML("beforeend", '<div class="r fail">FAIL  ' + name + " &mdash; " + e.message + "</div>");
+  }
+}
+function skipped(name, why) {
+  skip++;
+  out.insertAdjacentHTML("beforeend", '<div class="r skip">SKIP  ' + name + " &mdash; " + why + "</div>");
+}
+function eq(a, b, what) {
+  if (String(a) !== String(b)) throw new Error((what || "") + " expected " + JSON.stringify(b) + " got " + JSON.stringify(a));
+}
+
+const S = window.__SUTD;
+const D = (y, m, d) => new Date(y, m - 1, d, 12);
+
+/* ------------------------------------------------- cell text -> events */
+
+const FULL_CELL = [
+  "50.001 - S01",
+  "Introduction to Information Systems and Programming",
+  "LEC",
+  "9:00AM - 10:30AM",
+  "Think Tank 12",
+  "Instructors: A Lecturer, B Lecturer",
+].join("\n");
+
+check("full cell parses every field", () => {
+  const ev = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  eq(ev.code, "50.001", "code");
+  eq(ev.section, "S01", "section");
+  eq(ev.title, "Introduction to Information Systems and Programming", "title");
+  eq(ev.type, "LEC", "type");
+  eq(ev.start_time, "9:00AM", "start");
+  eq(ev.end_time, "10:30AM", "end");
+  eq(ev.location, "Think Tank 12", "location");
+  eq(ev.instructors, "A Lecturer, B Lecturer", "instructors");
+});
+
+check("cell with no title line yields the Unknown Course placeholder", () => {
+  const ev = S.parseCellText("50.002 - S02\nCBL\n2:00PM - 3:30PM\nClass 2.101", D(2025, 1, 13))[0];
+  eq(ev.title, "Unknown Course", "title");
+  eq(ev.type, "CBL", "type");
+  eq(ev.location, "Class 2.101", "location");
+  eq(ev.instructors, "Staff", "instructors default");
+});
+
+check("a Time Conflict cell yields two separate events", () => {
+  const cell = FULL_CELL + "\nTime Conflict\n" +
+    ["50.002 - S02", "Physics", "LAB", "9:30AM - 11:00AM", "Lab 1.502", "Instructors: C Tutor"].join("\n");
+  const evs = S.parseCellText(cell, D(2025, 1, 13));
+  eq(evs.length, 2, "event count");
+  eq(evs[0].code, "50.001");
+  eq(evs[1].code, "50.002");
+});
+
+check("code with a space (50 .001) is normalised", () => {
+  const ev = S.parseCellText("50 .001 - S01\nTitle\nLEC\n9:00AM - 10:30AM\nRoom", D(2025, 1, 13))[0];
+  eq(ev.code, "50.001", "code");
+});
+
+check("a cell with no time line is ignored", () => {
+  eq(S.parseCellText("Some heading\nwith no times", D(2025, 1, 13)).length, 0, "count");
+});
+
+/* ------------------------------------------------------------- dedupe */
+
+check("identical events scraped from nested cells collapse to one", () => {
+  const mk = () => S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  eq(S.dedupe([mk(), mk(), mk()]).length, 1, "count");
+});
+
+check("the same class on a different date is NOT deduped", () => {
+  const a = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  const b = S.parseCellText(FULL_CELL, D(2025, 1, 20))[0];
+  eq(S.dedupe([a, b]).length, 2, "count");
+});
+
+/* ------------------------------------------------ course summary */
+
+check("Unknown Course never wins the module name, whatever the order", () => {
+  const unknown = S.parseCellText("50.003 - S01\nTUT\n9:00AM - 10:00AM\nRoom", D(2025, 1, 13))[0];
+  const named = S.parseCellText("50.003 - S01\nReal Module Name\nLEC\n2:00PM - 3:00PM\nRoom", D(2025, 1, 13))[0];
+  eq(S.summariseCourses([unknown, named])[0].name, "Real Module Name", "placeholder first");
+  eq(S.summariseCourses([named, unknown])[0].name, "Real Module Name", "real name first");
+});
+
+/* ----------------------------------------------------------- clashes */
+
+check("a clash repeating across 14 weeks asks ONCE, not 14 times", () => {
+  const events = [];
+  for (let w = 0; w < 14; w++) {
+    const date = S.addDays(D(2025, 1, 13), w * 7);
+    events.push(S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nRoom 1", date)[0]);
+    events.push(S.parseCellText("50.002 - S02\nB\nLAB\n9:30AM - 11:00AM\nRoom 2", date)[0]);
+  }
+  const clashes = S.findClashes(events);
+  eq(clashes.length, 1, "dialog count");
+  eq(clashes[0].dates.length, 14, "affected dates");
+});
+
+check("touching but non-overlapping classes are not a clash", () => {
+  const date = D(2025, 1, 13);
+  const a = S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR1", date)[0];
+  const b = S.parseCellText("50.002 - S02\nB\nLAB\n10:30AM - 12:00PM\nR2", date)[0];
+  eq(S.findClashes([a, b]).length, 0, "clash count");
+});
+
+check("two sessions of the same course and type are never a clash", () => {
+  const date = D(2025, 1, 13);
+  const a = S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR1", date)[0];
+  const b = S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR2", date)[0];
+  eq(S.findClashes([a, b]).length, 0, "clash count");
+});
+
+check("choosing A drops every session of B, on all dates", () => {
+  const events = [];
+  for (let w = 0; w < 14; w++) {
+    const date = S.addDays(D(2025, 1, 13), w * 7);
+    events.push(S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR1", date)[0]);
+    events.push(S.parseCellText("50.002 - S02\nB\nLAB\n9:30AM - 11:00AM\nR2", date)[0]);
+  }
+  const clashes = S.findClashes(events);
+  const choices = {}; choices[clashes[0].key] = "a";
+  const kept = S.applyClashChoices(events, choices, clashes);
+  eq(kept.length, 14, "kept count");
+  eq(new Set(kept.map((e) => e.code)).size, 1, "distinct courses left");
+  eq(kept[0].code, clashes[0].a.code, "the chosen one survived");
+});
+
+check("a class that clashes on only some dates keeps its other sessions", () => {
+  const events = [];
+  for (let w = 0; w < 14; w++) {
+    const date = S.addDays(D(2025, 1, 13), w * 7);
+    // The lab meets every week; the lecture only turns up twice, and collides.
+    events.push(S.parseCellText("50.002 - S02\nB\nLAB\n9:30AM - 11:00AM\nR2", date)[0]);
+    if (w < 2) events.push(S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR1", date)[0]);
+  }
+  const clashes = S.findClashes(events);
+  eq(clashes.length, 1, "one dialog");
+  eq(clashes[0].dates.length, 2, "affected dates");
+
+  const choices = {}; choices[clashes[0].key] = clashes[0].a.code === "50.001" ? "a" : "b";
+  const kept = S.applyClashChoices(events, choices, clashes);
+  // 2 lectures kept + 12 non-clashing labs = 14. The other 2 labs go.
+  eq(kept.length, 14, "kept count");
+  eq(kept.filter((e) => e.code === "50.002").length, 12, "labs surviving");
+  eq(kept.filter((e) => e.code === "50.001").length, 2, "lectures surviving");
+});
+
+check("keep both leaves everything in place", () => {
+  const date = D(2025, 1, 13);
+  const a = S.parseCellText("50.001 - S01\nA\nLEC\n9:00AM - 10:30AM\nR1", date)[0];
+  const b = S.parseCellText("50.002 - S02\nB\nLAB\n9:30AM - 11:00AM\nR2", date)[0];
+  const clashes = S.findClashes([a, b]);
+  const choices = {}; choices[clashes[0].key] = "both";
+  eq(S.applyClashChoices([a, b], choices, clashes).length, 2, "kept count");
+});
+
+/* --------------------------------------------------------------- ics */
+
+check("Singapore 9:00AM becomes 01:00 UTC the same day", () => {
+  const ev = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  const ics = S.buildIcs([ev], 0);
+  if (ics.indexOf("DTSTART:20250113T010000Z") === -1) throw new Error("bad DTSTART in:\n" + ics);
+  if (ics.indexOf("DTEND:20250113T023000Z") === -1) throw new Error("bad DTEND");
+});
+
+check("an early class rolls back to the previous UTC day", () => {
+  const ev = S.parseCellText("50.001 - S01\nT\nLEC\n7:00AM - 8:00AM\nR", D(2025, 1, 13))[0];
+  const ics = S.buildIcs([ev], 0);
+  if (ics.indexOf("DTSTART:20250112T230000Z") === -1) throw new Error("bad rollback in:\n" + ics);
+});
+
+check("12:00PM is noon and 12:00AM is midnight", () => {
+  eq(S.toMinutes("12:00PM"), 720, "noon");
+  eq(S.toMinutes("12:00AM"), 0, "midnight");
+  eq(S.toMinutes("1:05PM"), 785, "afternoon");
+});
+
+check("reminder emits a VALARM, zero emits none", () => {
+  const ev = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  if (S.buildIcs([ev], 15).indexOf("TRIGGER:-PT15M") === -1) throw new Error("missing VALARM");
+  if (S.buildIcs([ev], 0).indexOf("BEGIN:VALARM") !== -1) throw new Error("VALARM present when off");
+});
+
+check("commas in text are escaped and long lines are folded", () => {
+  const ev = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  const ics = S.buildIcs([ev], 0);
+  if (ics.indexOf("A Lecturer\\, B Lecturer") === -1) throw new Error("comma not escaped");
+  for (const l of ics.split("\r\n")) {
+    if (l.length > 75) throw new Error("unfolded line of " + l.length + " chars: " + l.slice(0, 40));
+  }
+});
+
+check("calendar is well formed and CRLF terminated", () => {
+  const ev = S.parseCellText(FULL_CELL, D(2025, 1, 13))[0];
+  const ics = S.buildIcs([ev], 15);
+  if (!ics.startsWith("BEGIN:VCALENDAR\r\n")) throw new Error("bad opening");
+  if (!ics.endsWith("END:VCALENDAR\r\n")) throw new Error("bad ending");
+  eq((ics.match(/BEGIN:VEVENT/g) || []).length, 1, "event count");
+});
+
+/* ------------------------------ geometry: real layout, synthetic grid */
+
+check("a cell under the Wednesday column is dated week start + 2", () => {
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const fixture = document.getElementById("fixture");
+  fixture.textContent = "";
+  // The week heading has to be real rendered text: innerText ignores comments.
+  // Off-screen still counts as rendered; display:none would not.
+  const heading = document.createElement("div");
+  heading.textContent = "Week of 13/01/2025";
+  fixture.appendChild(heading);
+  const table = document.createElement("table");
+  const head = table.insertRow();
+  // Leading time-gutter header, exactly as PeopleSoft renders it.
+  head.appendChild(document.createElement("th"));
+  for (const d of days) {
+    const th = document.createElement("th");
+    th.textContent = d + " 13/01";
+    head.appendChild(th);
+  }
+  const row = table.insertRow();
+  row.insertCell().textContent = "9:00AM";
+  days.forEach((d) => {
+    const td = row.insertCell();
+    if (d !== "Wednesday") return;
+    // Real line breaks via <br>, the way PeopleSoft renders a cell. Setting
+    // textContent with "\n" would not work: normal white-space collapses those
+    // to spaces, innerText returns a single line, and the line-based parser
+    // correctly rejects it. This is the assumption the whole parser rests on.
+    FULL_CELL.split("\n").forEach((part, i) => {
+      if (i) td.appendChild(document.createElement("br"));
+      td.appendChild(document.createTextNode(part));
+    });
+  });
+  fixture.appendChild(table);
+
+  const week = S.parseCurrentWeek(fixture);
+  if (!week) throw new Error('parseCurrentWeek returned null - is the "Week of" comment text present?');
+  eq(week.dayColumns, 7, "day columns detected");
+  eq(week.events.length, 1, "events");
+  eq(week.events[0].date.getDate(), 15, "day of month (13 Jan + 2 = 15 Jan)");
+  eq(week.events[0].date.getMonth(), 0, "month");
+});
+
+/* -------------------------------------- optional: the real saved page */
+
+fetch("schedule-sample.html")
+  .then((r) => (r.ok ? r.text() : Promise.reject()))
+  .then((html) => {
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "position:absolute;left:-9999px;width:1400px;height:1200px";
+    document.body.appendChild(frame);
+    frame.srcdoc = html;
+    return new Promise((res) => (frame.onload = () => res(frame)));
+  })
+  .then((frame) => {
+    check("real saved portal page parses", () => {
+      const doc = frame.contentDocument;
+      const text = doc.body.innerText || "";
+      if (!/Week of/.test(text)) throw new Error('no "Week of" heading - was the page saved as Webpage, Complete?');
+      const week = S.parseCurrentWeek(doc.body);
+      if (!week) throw new Error("parseCurrentWeek returned null");
+      if (!week.events.length) throw new Error("no classes found on the real page");
+      eq(week.dayColumns, 7, "day columns");
+      const courses = S.summariseCourses(S.dedupe(week.events));
+      out.insertAdjacentHTML("beforeend",
+        '<div class="r pass">      found ' + week.events.length + " sessions, " +
+        courses.length + " modules: " + courses.map((c) => c.code).join(", ") + "</div>");
+    });
+    finish();
+  })
+  .catch(() => {
+    skipped("real saved portal page", "schedule-sample.html not found - save one from the portal to run this");
+    finish();
+  });
+
+function finish() {
+  const sum = document.getElementById("sum");
+  sum.className = fail ? "bad" : "ok";
+  sum.textContent = pass + " passed, " + fail + " failed, " + skip + " skipped";
+}
+</script>
+</body>
+</html>
